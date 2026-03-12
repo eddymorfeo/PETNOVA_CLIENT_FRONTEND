@@ -1,16 +1,95 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, LockKeyhole, Mail, PawPrint } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, Mail, PawPrint, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginSocialButtons } from "./login-social-buttons";
 import { LoginLegal } from "./login-legal";
+import { setClientSession } from "@/lib/auth/client-session";
+
+type LoginResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    accessToken: string;
+    client: {
+      id: string;
+      email: string;
+      fullName: string;
+      phone?: string | null;
+      documentId?: string | null;
+      address?: string | null;
+      isActive: boolean;
+    };
+  };
+};
 
 export function LoginForm() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setSubmitError("");
+
+    if (!email.trim()) {
+      setSubmitError("Debes ingresar tu correo electrónico.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setSubmitError("Debes ingresar tu contraseña.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password,
+          }),
+        }
+      );
+
+      const result: LoginResponse = await response.json();
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || "No fue posible iniciar sesión.");
+      }
+
+      setClientSession(result.data.accessToken, result.data.client);
+
+      router.push("/home");
+      router.refresh();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error al iniciar sesión."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="rounded-[2rem] border border-slate-200/70 bg-white/90 p-6 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.18)] sm:p-8">
@@ -34,7 +113,7 @@ export function LoginForm() {
         </p>
       </div>
 
-      <form className="mt-8 space-y-5">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-semibold text-slate-700">
             Correo electrónico
@@ -46,6 +125,8 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               className="h-12 rounded-2xl border-slate-200 bg-white pl-11 pr-4 text-slate-900 shadow-none focus-visible:ring-2 focus-visible:ring-cyan-500"
             />
           </div>
@@ -74,6 +155,8 @@ export function LoginForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               className="h-12 rounded-2xl border-slate-200 bg-white pl-11 pr-12 text-slate-900 shadow-none focus-visible:ring-2 focus-visible:ring-cyan-500"
             />
 
@@ -92,9 +175,22 @@ export function LoginForm() {
           </div>
         </div>
 
+        {submitError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-3 pt-2">
-          <Button className="h-12 w-full rounded-2xl bg-slate-950 text-base font-semibold text-white shadow-lg shadow-cyan-100 transition hover:bg-slate-800">
-            Iniciar sesión
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-12 w-full rounded-2xl bg-slate-950 text-base font-semibold text-white shadow-lg shadow-cyan-100 transition hover:bg-slate-800"
+          >
+            {isSubmitting ? "Ingresando..." : "Iniciar sesión"}
           </Button>
 
           <Button
@@ -118,7 +214,8 @@ export function LoginForm() {
           Crear cuenta
         </Link>
       </p>
-          <LoginLegal/>
+
+      <LoginLegal />
     </section>
   );
 }
