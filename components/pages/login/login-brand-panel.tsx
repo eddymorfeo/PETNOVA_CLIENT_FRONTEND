@@ -3,17 +3,20 @@ import { HeartPulse, ShieldCheck, Stethoscope } from "lucide-react";
 const highlights = [
   {
     title: "Atención organizada",
-    description: "Gestiona reservas, pacientes e historial clínico en un solo lugar.",
+    description:
+      "Gestiona reservas, pacientes e historial clínico en un solo lugar.",
     icon: Stethoscope,
   },
   {
     title: "Seguimiento clínico",
-    description: "Controla vacunas, tratamientos y evolución médica fácilmente.",
+    description:
+      "Controla vacunas, tratamientos y evolución médica fácilmente.",
     icon: HeartPulse,
   },
   {
     title: "Acceso seguro",
-    description: "Ingresa a la plataforma con una experiencia moderna y protegida.",
+    description:
+      "Ingresa a la plataforma con una experiencia moderna y protegida.",
     icon: ShieldCheck,
   },
 ];
@@ -34,6 +37,7 @@ export function LoginBrandPanel() {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-lg font-black">
             P
           </div>
+
           <div>
             <p className="text-sm font-black tracking-[0.18em]">PETNOVA</p>
             <p className="text-xs text-white/70">Clínica veterinaria</p>
@@ -50,8 +54,8 @@ export function LoginBrandPanel() {
           </h1>
 
           <p className="mt-6 text-base leading-8 text-white/80">
-            Ingresa a tu cuenta para gestionar citas, revisar historiales clínicos
-            y mantener la atención de tus mascotas siempre organizada.
+            Ingresa a tu cuenta para gestionar citas, revisar historiales
+            clínicos y mantener la atención de tus mascotas siempre organizada.
           </p>
         </div>
       </div>

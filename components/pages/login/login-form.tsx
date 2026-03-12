@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginSocialButtons } from "./login-social-buttons";
+import { LoginLegal } from "./login-legal";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +18,7 @@ export function LoginForm() {
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-50">
           <PawPrint className="h-5 w-5 text-cyan-700" />
         </div>
+
         <div>
           <p className="font-black tracking-[0.14em] text-slate-900">PETNOVA</p>
           <p className="text-xs text-slate-500">Clínica veterinaria</p>
@@ -51,7 +53,10 @@ export function LoginForm() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <label htmlFor="password" className="text-sm font-semibold text-slate-700">
+            <label
+              htmlFor="password"
+              className="text-sm font-semibold text-slate-700"
+            >
               Contraseña
             </label>
 
@@ -71,6 +76,7 @@ export function LoginForm() {
               placeholder="Ingresa tu contraseña"
               className="h-12 rounded-2xl border-slate-200 bg-white pl-11 pr-12 text-slate-900 shadow-none focus-visible:ring-2 focus-visible:ring-cyan-500"
             />
+
             <button
               type="button"
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
@@ -101,7 +107,7 @@ export function LoginForm() {
         </div>
       </form>
 
-      {/* <LoginSocialButtons /> */}
+      <LoginSocialButtons />
 
       <p className="mt-6 text-center text-sm text-slate-500">
         ¿No tienes una cuenta?{" "}
@@ -112,6 +118,7 @@ export function LoginForm() {
           Crear cuenta
         </Link>
       </p>
+          <LoginLegal/>
     </section>
   );
 }

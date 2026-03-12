@@ -1,8 +1,7 @@
-import { LoginBrandPanel } from "./login-brand-panel";
-import { LoginForm } from "./login-form";
-import { LoginLegal } from "./login-legal";
+import { LoginBrandPanel } from "../login/login-brand-panel";
+import { RegisterForm } from "./register-form";
 
-export function LoginShell() {
+export function RegisterPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f4fbff_0%,#f8fafc_35%,#eef7f7_100%)]">
       <div className="pointer-events-none absolute inset-0">
@@ -17,8 +16,7 @@ export function LoginShell() {
 
           <div className="flex items-center justify-center p-6 sm:p-8 lg:p-10">
             <div className="w-full max-w-md">
-              <LoginForm />
-              {/* <LoginLegal /> */}
+              <RegisterForm />
             </div>
           </div>
         </div>
