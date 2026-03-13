@@ -79,6 +79,23 @@ export async function fetchMyPets(): Promise<PetItem[]> {
     .filter((pet) => pet.clientId === clientId);
 }
 
+export async function fetchPetById(petId: string): Promise<PetItem> {
+  const response = await fetch(`${API_URL}/pets/${petId}`, {
+    method: "GET",
+    headers: getClientAuthHeaders(),
+    cache: "no-store",
+  });
+
+  ensureJsonResponse(response);
+  const result: PetResponse = await response.json();
+
+  if (!response.ok || !result.success || !result.data) {
+    throw new Error(result.message || "No fue posible obtener la mascota.");
+  }
+
+  return mapPet(result.data);
+}
+
 export async function createPet(payload: CreatePetPayload): Promise<PetItem> {
   const meResponse = await fetch(`${API_URL}/auth/clients/me`, {
     method: "GET",
@@ -139,6 +156,68 @@ export async function createPet(payload: CreatePetPayload): Promise<PetItem> {
   }
 
   return mapPet(result.data);
+}
+
+export async function updatePet(
+  petId: string,
+  payload: CreatePetPayload,
+): Promise<PetItem> {
+  const requestBody: Record<string, unknown> = {
+    name: payload.name,
+    speciesId: payload.speciesId,
+    sex: payload.sex || "UNKNOWN",
+    birthDate: payload.birthDate,
+    isSterilized: payload.isSterilized ?? false,
+  };
+
+  if (payload.breedId && payload.breedId.trim() !== "") {
+    requestBody.breedId = payload.breedId;
+  }
+
+  if (payload.color && payload.color.trim() !== "") {
+    requestBody.color = payload.color;
+  }
+
+  if (payload.microchip && payload.microchip.trim() !== "") {
+    requestBody.microchip = payload.microchip;
+  }
+
+  if (payload.allergies && payload.allergies.trim() !== "") {
+    requestBody.allergies = payload.allergies;
+  }
+
+  if (payload.notes && payload.notes.trim() !== "") {
+    requestBody.notes = payload.notes;
+  }
+
+  const response = await fetch(`${API_URL}/pets/${petId}`, {
+    method: "PATCH",
+    headers: getClientAuthHeaders(),
+    body: JSON.stringify(requestBody),
+  });
+
+  ensureJsonResponse(response);
+  const result: PetResponse = await response.json();
+
+  if (!response.ok || !result.success || !result.data) {
+    throw new Error(result.message || "No fue posible actualizar la mascota.");
+  }
+
+  return mapPet(result.data);
+}
+
+export async function deletePet(petId: string): Promise<void> {
+  const response = await fetch(`${API_URL}/pets/${petId}`, {
+    method: "DELETE",
+    headers: getClientAuthHeaders(),
+  });
+
+  ensureJsonResponse(response);
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "No fue posible eliminar la mascota.");
+  }
 }
 
 export async function fetchSpeciesOptions(): Promise<SpeciesOption[]> {

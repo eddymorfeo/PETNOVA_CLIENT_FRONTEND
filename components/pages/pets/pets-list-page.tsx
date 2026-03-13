@@ -25,7 +25,7 @@ export function PetsListPage() {
         setLoadError(
           error instanceof Error
             ? error.message
-            : "Ocurrió un error al cargar tus mascotas."
+            : "Ocurrió un error al cargar tus mascotas.",
         );
       } finally {
         setIsLoading(false);

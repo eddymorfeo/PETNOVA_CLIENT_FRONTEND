@@ -1,12 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
+  Pencil,
   PawPrint,
   Plus,
   ShieldCheck,
   Stethoscope,
+  Trash2,
 } from "lucide-react";
+import { useState } from "react";
 
+import { deletePet } from "@/api/pets/pets.api";
 import { Button } from "@/components/ui/button";
 import type { PetItem } from "@/types/pets/pet.types";
 
@@ -39,6 +46,38 @@ function formatBirthDate(value?: string | null) {
 }
 
 export function PetsListTable({ pets }: { pets: PetItem[] }) {
+  const router = useRouter();
+  const [deletingPetId, setDeletingPetId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState("");
+
+  const handleDelete = async (petId: string, petName: string) => {
+    const confirmed = window.confirm(
+      `¿Deseas eliminar a ${petName}? Esta acción desactivará la mascota.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setSubmitError("");
+      setDeletingPetId(petId);
+
+      await deletePet(petId);
+
+      router.refresh();
+      router.push("/home/pets");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible eliminar la mascota.",
+      );
+    } finally {
+      setDeletingPetId(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <section className="flex flex-col gap-4 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -50,8 +89,7 @@ export function PetsListTable({ pets }: { pets: PetItem[] }) {
             Listado de mascotas registradas
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Revisa la información principal de cada mascota y prepara la base para
-            sus fichas clínicas, citas y controles.
+            Revisa la información principal de cada mascota y gestiona sus datos.
           </p>
         </div>
 
@@ -65,6 +103,12 @@ export function PetsListTable({ pets }: { pets: PetItem[] }) {
           </Link>
         </Button>
       </section>
+
+      {submitError && (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
+          {submitError}
+        </section>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-[1.6fr_0.9fr]">
         <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -157,6 +201,30 @@ export function PetsListTable({ pets }: { pets: PetItem[] }) {
                       {pet.notes || "Sin observaciones"}
                     </p>
                   </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-10 rounded-xl border-slate-200"
+                  >
+                    <Link href={`/home/pets/${pet.id}/edit`}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Link>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleDelete(pet.id, pet.name)}
+                    disabled={deletingPetId === pet.id}
+                    className="h-10 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {deletingPetId === pet.id ? "Eliminando..." : "Eliminar"}
+                  </Button>
                 </div>
               </article>
             ))}
