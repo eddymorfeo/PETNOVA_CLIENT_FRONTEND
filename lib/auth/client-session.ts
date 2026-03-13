@@ -18,7 +18,7 @@ export function setClientSession(accessToken: string, client: ClientSessionUser)
   localStorage.setItem(CLIENT_DATA_KEY, JSON.stringify(client));
 }
 
-export function getClientAccessToken() {
+export function getClientAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(CLIENT_ACCESS_TOKEN_KEY);
 }
@@ -36,6 +36,11 @@ export function getClientSessionUser(): ClientSessionUser | null {
   }
 }
 
+export function updateClientSessionUser(client: ClientSessionUser) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CLIENT_DATA_KEY, JSON.stringify(client));
+}
+
 export function clearClientSession() {
   if (typeof window === "undefined") return;
 
@@ -43,17 +48,16 @@ export function clearClientSession() {
   localStorage.removeItem(CLIENT_DATA_KEY);
 }
 
-export function getClientAuthHeaders() {
+export function getClientAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
   const token = getClientAccessToken();
 
-  if (!token) {
-    return {
-      "Content-Type": "application/json",
-    };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+  return headers;
 }

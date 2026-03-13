@@ -1,9 +1,7 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
-
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type ClientPanelTopbarProps = {
@@ -42,14 +40,6 @@ export function ClientPanelTopbar({
           >
             <Bell className="h-4 w-4" />
           </Button>
-        </div>
-
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Buscar en el portal..."
-            className="h-10 rounded-2xl border-slate-200 bg-slate-50 pl-10 pr-4 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-cyan-500"
-          />
         </div>
       </div>
     </header>

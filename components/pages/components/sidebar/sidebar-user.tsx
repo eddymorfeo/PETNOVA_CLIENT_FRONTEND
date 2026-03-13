@@ -40,7 +40,7 @@ export function ClientSidebarUser() {
         type="button"
         variant="ghost"
         onClick={handleLogout}
-        className="mt-3 h-9 w-full justify-start rounded-xl px-3 text-sm font-medium text-slate-700 hover:bg-white"
+        className="mt-3 h-9 w-full justify-start rounded-xl px-3 text-sm font-medium text-slate-700 bg-gray-300 hover:bg-gray-400"
       >
         <LogOut className="mr-2 h-4 w-4" />
         Cerrar sesión

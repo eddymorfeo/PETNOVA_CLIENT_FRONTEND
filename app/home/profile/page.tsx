@@ -1,3 +1,5 @@
+import { ClientProfileForm } from "@/components/pages/profile/profile-form";
+
 export default function LoginPage() {
-  return <div>Portal de cuenta del cliente</div>;
+  return <div> <ClientProfileForm /></div>;
 }
