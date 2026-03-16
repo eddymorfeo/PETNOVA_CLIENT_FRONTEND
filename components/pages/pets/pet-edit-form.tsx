@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, PawPrint, Save } from "lucide-react";
+import { PawPrint, Save, X } from "lucide-react";
 
 import {
   fetchBreedOptions,
@@ -17,6 +17,40 @@ import type {
   PetSex,
   SpeciesOption,
 } from "@/types/pets/pet.types";
+
+function normalizeDateForInput(value?: string | null): string {
+  if (!value) return "";
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(trimmedValue)) {
+    const [day, month, year] = trimmedValue.split("-");
+    return `${year}-${month}-${day}`;
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmedValue)) {
+    const [day, month, year] = trimmedValue.split("/");
+    return `${year}-${month}-${day}`;
+  }
+
+  const parsedDate = new Date(trimmedValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 export function PetEditForm({ petId }: { petId: string }) {
   const router = useRouter();
@@ -56,7 +90,7 @@ export function PetEditForm({ petId }: { petId: string }) {
         setSpeciesId(pet.speciesId ?? "");
         setBreedId(pet.breedId ?? "");
         setSex((pet.sex as PetSex) ?? "UNKNOWN");
-        setBirthDate(pet.birthDate ?? "");
+        setBirthDate(normalizeDateForInput(pet.birthDate));
         setColor(pet.color ?? "");
         setMicrochip(pet.microchip ?? "");
         setIsSterilized(Boolean(pet.isSterilized));
@@ -83,6 +117,10 @@ export function PetEditForm({ petId }: { petId: string }) {
     if (!speciesId) return breeds;
     return breeds.filter((breed) => breed.speciesId === speciesId);
   }, [breeds, speciesId]);
+
+  const handleCancel = () => {
+    router.push("/home/pets");
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -321,7 +359,18 @@ export function PetEditForm({ petId }: { petId: string }) {
             </div>
           )}
 
-          <div className="flex justify-end border-t border-slate-200 pt-5">
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="h-11 rounded-2xl border-slate-200 px-5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+
             <Button
               type="submit"
               disabled={isSaving}

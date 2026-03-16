@@ -203,8 +203,6 @@ export function LoginForm() {
         </div>
       </form>
 
-      <LoginSocialButtons />
-
       <p className="mt-6 text-center text-sm text-slate-500">
         ¿No tienes una cuenta?{" "}
         <Link
