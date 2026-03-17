@@ -50,7 +50,7 @@ export const clientSidebarMenu: ClientSidebarItem[] = [
     items: [
       { title: "Próximas citas", href: "/home/appointments" },
       { title: "Historial de citas", href: "/home/appointments/history" },
-      { title: "Reservar cita", href: "/appointments-client" },
+      { title: "Reservar cita", href: "/home/appointments-client" },
     ],
   },
   {
