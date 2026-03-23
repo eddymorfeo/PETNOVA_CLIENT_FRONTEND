@@ -51,6 +51,7 @@ export async function fetchMyPets(): Promise<PetItem[]> {
   });
 
   ensureJsonResponse(meResponse);
+
   const meResult = await meResponse.json();
 
   if (!meResponse.ok || !meResult.success || !meResult.data?.id) {
@@ -61,22 +62,21 @@ export async function fetchMyPets(): Promise<PetItem[]> {
 
   const clientId = meResult.data.id;
 
-  const response = await fetch(`${API_URL}/pets`, {
+  const response = await fetch(`${API_URL}/pets/client/${clientId}`, {
     method: "GET",
     headers: getClientAuthHeaders(),
     cache: "no-store",
   });
 
   ensureJsonResponse(response);
+
   const result: PetsListResponse = await response.json();
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "No fue posible obtener tus mascotas.");
   }
 
-  return (result.data ?? [])
-    .map(mapPet)
-    .filter((pet) => pet.clientId === clientId);
+  return (result.data ?? []).map(mapPet);
 }
 
 export async function fetchPetById(petId: string): Promise<PetItem> {
@@ -87,6 +87,7 @@ export async function fetchPetById(petId: string): Promise<PetItem> {
   });
 
   ensureJsonResponse(response);
+
   const result: PetResponse = await response.json();
 
   if (!response.ok || !result.success || !result.data) {
@@ -103,6 +104,7 @@ export async function createPet(payload: CreatePetPayload): Promise<PetItem> {
   });
 
   ensureJsonResponse(meResponse);
+
   const meResult = await meResponse.json();
 
   if (!meResponse.ok || !meResult.success || !meResult.data?.id) {
@@ -149,6 +151,7 @@ export async function createPet(payload: CreatePetPayload): Promise<PetItem> {
   });
 
   ensureJsonResponse(response);
+
   const result: PetResponse = await response.json();
 
   if (!response.ok || !result.success || !result.data) {
@@ -197,6 +200,7 @@ export async function updatePet(
   });
 
   ensureJsonResponse(response);
+
   const result: PetResponse = await response.json();
 
   if (!response.ok || !result.success || !result.data) {
@@ -213,6 +217,7 @@ export async function deletePet(petId: string): Promise<void> {
   });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success) {
@@ -228,6 +233,7 @@ export async function fetchSpeciesOptions(): Promise<SpeciesOption[]> {
   });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success) {
@@ -248,6 +254,7 @@ export async function fetchBreedOptions(): Promise<BreedOption[]> {
   });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success) {

@@ -6,6 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function ensureJsonResponse(response: Response) {
   const contentType = response.headers.get("content-type");
+
   if (!contentType || !contentType.includes("application/json")) {
     throw new Error("El backend no devolvió una respuesta JSON válida.");
   }
@@ -32,7 +33,8 @@ function mapAppointment(raw: any): AppointmentItem {
     clientId: raw.client_id ?? raw.clientId ?? null,
     petId: raw.pet_id ?? raw.petId ?? null,
     veterinarianId: raw.veterinarian_id ?? raw.veterinarianId ?? null,
-    appointmentTypeId: raw.appointment_type_id ?? raw.appointmentTypeId ?? null,
+    appointmentTypeId:
+      raw.appointment_type_id ?? raw.appointmentTypeId ?? null,
     startsAt: raw.starts_at ?? raw.startsAt ?? null,
     endsAt: raw.ends_at ?? raw.endsAt ?? null,
     status: raw.status ?? null,
@@ -60,10 +62,13 @@ export async function fetchAuthenticatedClient(): Promise<AuthClientProfile> {
   });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success || !result.data?.id) {
-    throw new Error(result.message || "No fue posible obtener el cliente autenticado.");
+    throw new Error(
+      result.message || "No fue posible obtener el cliente autenticado.",
+    );
   }
 
   return {
@@ -77,25 +82,21 @@ export async function fetchAuthenticatedClient(): Promise<AuthClientProfile> {
 }
 
 export async function fetchMyAppointments(): Promise<AppointmentItem[]> {
-  const [client, response] = await Promise.all([
-    fetchAuthenticatedClient(),
-    fetch(`${API_URL}/appointments`, {
-      method: "GET",
-      headers: getClientAuthHeaders(),
-      cache: "no-store",
-    }),
-  ]);
+  const response = await fetch(`${API_URL}/appointments/my`, {
+    method: "GET",
+    headers: getClientAuthHeaders(),
+    cache: "no-store",
+  });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "No fue posible obtener las citas.");
   }
 
-  return (result.data ?? [])
-    .map(mapAppointment)
-    .filter((appointment: AppointmentItem) => appointment.clientId === client.id);
+  return (result.data ?? []).map(mapAppointment);
 }
 
 type CreateAuthenticatedAppointmentPayload = {
@@ -112,8 +113,9 @@ export async function createAuthenticatedAppointment(
   payload: CreateAuthenticatedAppointmentPayload,
 ) {
   const client = await fetchAuthenticatedClient();
-
-  const startsAt = new Date(`${payload.appointmentDate}T${payload.appointmentTime}:00`);
+  const startsAt = new Date(
+    `${payload.appointmentDate}T${payload.appointmentTime}:00`,
+  );
   const endsAt = new Date(startsAt.getTime() + 30 * 60 * 1000);
 
   const requestBody = {
@@ -135,6 +137,7 @@ export async function createAuthenticatedAppointment(
   });
 
   ensureJsonResponse(response);
+
   const result = await response.json();
 
   if (!response.ok || !result.success || !result.data) {
