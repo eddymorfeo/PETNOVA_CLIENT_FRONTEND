@@ -1,12 +1,13 @@
 import { env } from "@/lib/env";
 import { fetcher } from "@/lib/fetcher";
-
 import type { ApiResponse } from "@/types/common/api-response.types";
 import type {
   AppointmentTypeOption,
   AvailableTimeOption,
+  BreedOption,
   CreateGuestAppointmentRequestDto,
   CreateGuestAppointmentResponseDto,
+  SpeciesOption,
   VeterinarianOption,
 } from "@/types/appointment-guest/appointment-guest.types";
 
@@ -35,6 +36,40 @@ export async function fetchPublicVeterinarians(): Promise<VeterinarianOption[]> 
     id: veterinarian.id,
     fullName: veterinarian.full_name,
     specialty: veterinarian.specialty_name ?? undefined,
+  }));
+}
+
+export async function fetchPublicSpecies(): Promise<SpeciesOption[]> {
+  const response = await fetcher<ApiResponse<any[]>>(
+    `${PUBLIC_GUEST_APPOINTMENT_BASE_PATH}/species`,
+    {
+      method: "GET",
+    }
+  );
+
+  return response.data.map((species) => ({
+    id: species.id,
+    code: species.code,
+    name: species.name,
+  }));
+}
+
+export async function fetchPublicBreedsBySpecies(
+  speciesId: string
+): Promise<BreedOption[]> {
+  const searchParams = new URLSearchParams({ speciesId });
+
+  const response = await fetcher<ApiResponse<any[]>>(
+    `${PUBLIC_GUEST_APPOINTMENT_BASE_PATH}/breeds?${searchParams.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+
+  return response.data.map((breed) => ({
+    id: breed.id,
+    speciesId: breed.species_id,
+    name: breed.name,
   }));
 }
 

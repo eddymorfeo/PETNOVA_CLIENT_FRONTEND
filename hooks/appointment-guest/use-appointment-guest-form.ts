@@ -15,19 +15,16 @@ const defaultValues: AppointmentGuestSchemaData = {
   contactName: "",
   contactEmail: "",
   contactPhone: "",
-
   petName: "",
-  petSpecies: "dog",
+  petSpecies: "",
   petBreed: "",
   petSex: "",
   petAge: "",
   petWeightKg: "",
-
   appointmentTypeId: "",
   veterinarianId: "",
   appointmentDate: "",
   appointmentTime: "",
-
   reason: "",
   observations: "",
 };
@@ -50,13 +47,16 @@ export function useAppointmentGuestForm() {
       const payload = mapAppointmentGuestFormToRequest(formData);
       const response = await createGuestAppointment(payload);
 
-      setSubmitSuccessMessage(response.message || "Reserva registrada correctamente.");
+      setSubmitSuccessMessage(
+        response.message || "Reserva registrada correctamente."
+      );
       form.reset(defaultValues);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
           : "No fue posible registrar la reserva.";
+
       setSubmitError(errorMessage);
     }
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -27,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const EMPTY_OPTION_VALUE = "__empty__";
 
 function SectionHeader({
   icon: Icon,
@@ -56,13 +59,16 @@ function SectionHeader({
 function FieldLabel({
   htmlFor,
   children,
+  required = false,
 }: {
   htmlFor?: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label htmlFor={htmlFor} className="text-sm font-medium text-slate-700">
       {children}
+      {required && <span className="ml-1 text-rose-500">*</span>}
     </label>
   );
 }
@@ -73,13 +79,13 @@ function FieldError({ message }: { message?: string }) {
 }
 
 const inputClassName =
-  "h-11 rounded-xl border-slate-200 bg-white px-4 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200";
+  "!h-10 w-full rounded-xl border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200";
 
 const textareaClassName =
-  "rounded-[1.25rem] border-slate-200 bg-white px-4 py-3 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200";
+  "w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-200";
 
 const selectTriggerClassName =
-  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus:ring-2 focus:ring-cyan-200 focus:ring-offset-0";
+  "!h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus:ring-2 focus:ring-cyan-200 focus:ring-offset-0";
 
 const selectContentClassName =
   "rounded-xl border border-slate-200 bg-white shadow-xl";
@@ -87,9 +93,22 @@ const selectContentClassName =
 const selectItemClassName =
   "cursor-pointer rounded-lg text-sm text-slate-700 outline-none focus:bg-cyan-50 focus:text-slate-900 data-[state=checked]:bg-cyan-50 data-[state=checked]:text-slate-900";
 
+function normalizeSelectValue(value: string) {
+  return value || EMPTY_OPTION_VALUE;
+}
+
+function denormalizeSelectValue(value: string) {
+  return value === EMPTY_OPTION_VALUE ? "" : value;
+}
+
 export function AppointmentGuestForm() {
   const { form, onSubmit, isSubmitting, submitError, submitSuccessMessage } =
     useAppointmentGuestForm();
+
+  const selectedSpeciesId = useWatch({
+    control: form.control,
+    name: "petSpecies",
+  });
 
   const selectedVeterinarianId = useWatch({
     control: form.control,
@@ -101,14 +120,35 @@ export function AppointmentGuestForm() {
     name: "appointmentDate",
   });
 
-  const { appointmentTypes, veterinarians, isLoadingCatalogs, catalogsError } =
-    useAppointmentGuestCatalogs();
+  const {
+    appointmentTypes,
+    veterinarians,
+    speciesOptions,
+    breedOptions,
+    isLoadingCatalogs,
+    isLoadingBreeds,
+    catalogsError,
+    breedsError,
+  } = useAppointmentGuestCatalogs(selectedSpeciesId);
 
   const { availableTimes, isLoadingTimes, timesError } =
     useAppointmentGuestAvailability({
       veterinarianId: selectedVeterinarianId,
       appointmentDate: selectedAppointmentDate,
     });
+
+  const shouldShowAppointmentTimeError =
+    !!form.formState.errors.appointmentTime &&
+    (!!form.formState.touchedFields.appointmentTime ||
+      form.formState.submitCount > 0);
+
+  useEffect(() => {
+    form.setValue("petBreed", "", { shouldValidate: true });
+  }, [selectedSpeciesId, form]);
+
+  useEffect(() => {
+    form.setValue("appointmentTime", "", { shouldValidate: true });
+  }, [selectedVeterinarianId, selectedAppointmentDate, form]);
 
   return (
     <motion.div
@@ -163,7 +203,9 @@ export function AppointmentGuestForm() {
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <FieldLabel htmlFor="contactName">Nombre completo</FieldLabel>
+                <FieldLabel htmlFor="contactName" required>
+                  Nombre completo
+                </FieldLabel>
                 <Input
                   id="contactName"
                   placeholder="Ingresa tu nombre"
@@ -176,7 +218,7 @@ export function AppointmentGuestForm() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel htmlFor="contactEmail">
+                <FieldLabel htmlFor="contactEmail" required>
                   Correo electrónico
                 </FieldLabel>
                 <Input
@@ -215,7 +257,9 @@ export function AppointmentGuestForm() {
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <FieldLabel htmlFor="petName">Nombre de la mascota</FieldLabel>
+                <FieldLabel htmlFor="petName" required>
+                  Nombre de la mascota
+                </FieldLabel>
                 <Input
                   id="petName"
                   placeholder="Ej: Luna"
@@ -226,21 +270,29 @@ export function AppointmentGuestForm() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel>Especie</FieldLabel>
+                <FieldLabel required>Especie</FieldLabel>
                 <Controller
                   control={form.control}
-                  name="appointmentTypeId"
+                  name="petSpecies"
                   render={({ field }) => (
                     <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+                      value={normalizeSelectValue(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
                       disabled={isLoadingCatalogs}
                     >
                       <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Selecciona la especie" />
+                        <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent className={selectContentClassName}>
-                        {appointmentTypes.map((species) => (
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
+                        {speciesOptions.map((species) => (
                           <SelectItem
                             className={selectItemClassName}
                             key={species.id}
@@ -259,23 +311,92 @@ export function AppointmentGuestForm() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel htmlFor="petBreed">Raza</FieldLabel>
-                <Input
-                  id="petBreed"
-                  placeholder="Ej: Mestizo"
-                  className={inputClassName}
-                  {...form.register("petBreed")}
+                <FieldLabel>Raza</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="petBreed"
+                  render={({ field }) => (
+                    <Select
+                      value={normalizeSelectValue(field.value ?? "")}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
+                      disabled={!selectedSpeciesId || isLoadingBreeds}
+                    >
+                      <SelectTrigger className={selectTriggerClassName}>
+                        <SelectValue
+                          placeholder={
+                            !selectedSpeciesId
+                              ? "Selecciona primero una especie"
+                              : isLoadingBreeds
+                                ? "Cargando razas..."
+                                : "Seleccionar"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className={selectContentClassName}>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
+                        {breedOptions.map((breed) => (
+                          <SelectItem
+                            className={selectItemClassName}
+                            key={breed.id}
+                            value={breed.name}
+                          >
+                            {breed.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
                 <FieldError message={form.formState.errors.petBreed?.message} />
+                {breedsError && (
+                  <p className="text-sm text-amber-600">{breedsError}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <FieldLabel htmlFor="petSex">Sexo</FieldLabel>
-                <Input
-                  id="petSex"
-                  placeholder="Ej: Hembra"
-                  className={inputClassName}
-                  {...form.register("petSex")}
+                <FieldLabel>Sexo</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="petSex"
+                  render={({ field }) => (
+                    <Select
+                      value={normalizeSelectValue(field.value ?? "")}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
+                    >
+                      <SelectTrigger className={selectTriggerClassName}>
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent className={selectContentClassName}>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value="Macho"
+                        >
+                          Macho
+                        </SelectItem>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value="Hembra"
+                        >
+                          Hembra
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
               </div>
 
@@ -310,20 +431,28 @@ export function AppointmentGuestForm() {
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <FieldLabel>Tipo de atención</FieldLabel>
+                <FieldLabel required>Tipo de atención</FieldLabel>
                 <Controller
                   control={form.control}
                   name="appointmentTypeId"
                   render={({ field }) => (
                     <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+                      value={normalizeSelectValue(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
                       disabled={isLoadingCatalogs}
                     >
                       <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Selecciona el tipo de atención" />
+                        <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent className={selectContentClassName}>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
                         {appointmentTypes.map((appointmentType) => (
                           <SelectItem
                             className={selectItemClassName}
@@ -343,20 +472,28 @@ export function AppointmentGuestForm() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel>Veterinario</FieldLabel>
+                <FieldLabel required>Veterinario</FieldLabel>
                 <Controller
                   control={form.control}
                   name="veterinarianId"
                   render={({ field }) => (
                     <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+                      value={normalizeSelectValue(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
                       disabled={isLoadingCatalogs}
                     >
                       <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Selecciona un profesional" />
+                        <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent className={selectContentClassName}>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
                         {veterinarians.map((veterinarian) => (
                           <SelectItem
                             className={selectItemClassName}
@@ -375,8 +512,10 @@ export function AppointmentGuestForm() {
                 />
               </div>
 
-              <div className="">
-                <FieldLabel htmlFor="appointmentDate">Fecha</FieldLabel>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="appointmentDate" required>
+                  Fecha
+                </FieldLabel>
                 <Input
                   id="appointmentDate"
                   type="date"
@@ -389,30 +528,41 @@ export function AppointmentGuestForm() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel>Horario disponible</FieldLabel>
+                <FieldLabel required>Horario disponible</FieldLabel>
                 <Controller
                   control={form.control}
                   name="appointmentTime"
                   render={({ field }) => (
                     <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+                      value={normalizeSelectValue(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(denormalizeSelectValue(value))
+                      }
                       disabled={
                         !selectedVeterinarianId ||
                         !selectedAppointmentDate ||
                         isLoadingTimes
                       }
                     >
-                      <SelectTrigger className={selectTriggerClassName} >
+                      <SelectTrigger className={selectTriggerClassName}>
                         <SelectValue
                           placeholder={
                             isLoadingTimes
                               ? "Cargando horarios..."
-                              : "Selecciona un bloque"
+                              : !selectedVeterinarianId ||
+                                  !selectedAppointmentDate
+                                ? "Selecciona veterinario y fecha"
+                                : "Seleccionar"
                           }
                         />
                       </SelectTrigger>
                       <SelectContent className={selectContentClassName}>
+                        <SelectItem
+                          className={selectItemClassName}
+                          value={EMPTY_OPTION_VALUE}
+                        >
+                          Seleccionar
+                        </SelectItem>
                         {availableTimes.map((timeOption) => (
                           <SelectItem
                             className={selectItemClassName}
@@ -427,7 +577,11 @@ export function AppointmentGuestForm() {
                   )}
                 />
                 <FieldError
-                  message={form.formState.errors.appointmentTime?.message}
+                  message={
+                    shouldShowAppointmentTimeError
+                      ? form.formState.errors.appointmentTime?.message
+                      : undefined
+                  }
                 />
                 {timesError && (
                   <p className="text-sm text-amber-600">{timesError}</p>

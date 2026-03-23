@@ -48,9 +48,7 @@ export const clientSidebarMenu: ClientSidebarItem[] = [
     icon: CalendarDays,
     badge: "1",
     items: [
-      { title: "Próximas citas", href: "/home/appointments" },
-      { title: "Historial de citas", href: "/home/appointments/history" },
-      { title: "Reservar cita", href: "/home/appointments-client" },
+      { title: "Citas", href: "/home/appointments" },
     ],
   },
   {
@@ -70,25 +68,4 @@ export const clientSidebarMenu: ClientSidebarItem[] = [
       { title: "Recordatorios", href: "/home/reminders" },
     ],
   },
-  // {
-  //   title: "Bienestar",
-  //   icon: HeartPulse,
-  //   items: [
-  //     { title: "Seguimiento", href: "/home/wellness" },
-  //     { title: "Indicaciones", href: "/home/care" },
-  //   ],
-  // },
-  // {
-  //   title: "Seguridad",
-  //   icon: ShieldCheck,
-  //   items: [
-  //     { title: "Cambiar contraseña", href: "/home/security/password" },
-  //     { title: "Sesiones activas", href: "/home/security/sessions" },
-  //   ],
-  // },
-  // {
-  //   title: "Configuración",
-  //   href: "/home/settings",
-  //   icon: Settings,
-  // },
 ];
