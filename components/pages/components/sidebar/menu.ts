@@ -55,7 +55,7 @@ export const clientSidebarMenu: ClientSidebarItem[] = [
     title: "Ficha clínica",
     icon: ClipboardList,
     items: [
-      { title: "Consultas médicas", href: "/home/consultations" },
+      { title: "Consultas médicas", href: "/home/medical-records" },
     ],
   },
   // {
