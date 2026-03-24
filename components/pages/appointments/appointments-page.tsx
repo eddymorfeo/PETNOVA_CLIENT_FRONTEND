@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { History, CalendarClock, PlusCircle } from "lucide-react";
+import { CalendarClock, History, PlusCircle } from "lucide-react";
 
 import {
   fetchMyAppointments,
@@ -9,14 +9,52 @@ import {
 } from "@/api/appointments/appointments.api";
 import { fetchMyPets } from "@/api/pets/pets.api";
 import type { PetItem } from "@/types/pets/pet.types";
+
 import { AppointmentHeader } from "./appointment-header";
 import { AppointmentBookingForm } from "./appointment-booking-form";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+function formatDate(value?: string | null) {
+  if (!value) return "Sin fecha";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+
+  return date.toLocaleDateString("es-CL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "Sin hora";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Sin hora";
+
+  return date.toLocaleTimeString("es-CL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 function formatDateTime(value?: string | null) {
   if (!value) return "Sin fecha";
+
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) return "Sin fecha";
 
   return date.toLocaleString("es-CL", {
@@ -28,7 +66,64 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-function AppointmentCard({
+function getAppointmentStatusLabel(status?: string | null) {
+  const normalizedStatus = status?.toUpperCase() ?? "";
+
+  const labels: Record<string, string> = {
+    SCHEDULED: "Agendada",
+    CONFIRMED: "Confirmada",
+    COMPLETED: "Completada",
+    CANCELLED: "Cancelada",
+    CANCELED: "Cancelada",
+    NO_SHOW: "No asistió",
+    IN_PROGRESS: "En atención",
+    PENDING: "Pendiente",
+  };
+
+  return labels[normalizedStatus] ?? "Pendiente";
+}
+
+function getAppointmentStatusBadgeClassName(status?: string | null) {
+  const normalizedStatus = status?.toUpperCase() ?? "";
+
+  const styles: Record<string, string> = {
+    SCHEDULED: "border-cyan-100 bg-cyan-50 text-cyan-700",
+    CONFIRMED: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    COMPLETED: "border-slate-200 bg-slate-100 text-slate-700",
+    CANCELLED: "border-rose-100 bg-rose-50 text-rose-700",
+    CANCELED: "border-rose-100 bg-rose-50 text-rose-700",
+    NO_SHOW: "border-amber-100 bg-amber-50 text-amber-700",
+    IN_PROGRESS: "border-violet-100 bg-violet-50 text-violet-700",
+    PENDING: "border-slate-200 bg-slate-100 text-slate-700",
+  };
+
+  return (
+    styles[normalizedStatus] ?? "border-slate-200 bg-slate-100 text-slate-700"
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-8 text-center text-sm text-slate-500">
+      {message}
+    </div>
+  );
+}
+
+function AppointmentStatusBadge({ status }: { status?: string | null }) {
+  return (
+    <span
+      className={[
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold",
+        getAppointmentStatusBadgeClassName(status),
+      ].join(" ")}
+    >
+      {getAppointmentStatusLabel(status)}
+    </span>
+  );
+}
+
+function HistoryAppointmentCard({
   appointment,
   petName,
 }: {
@@ -36,53 +131,44 @@ function AppointmentCard({
   petName: string;
 }) {
   return (
-    <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-950">{petName}</h3>
-          <p className="mt-1 text-sm text-slate-500">
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h3 className="truncate text-base font-semibold text-slate-950">
+            {petName}
+          </h3>
+          <p className="mt-1 line-clamp-2 text-sm text-slate-600">
             {appointment.reason || "Sin motivo informado"}
           </p>
         </div>
 
-        <span className="inline-flex w-fit rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
-          {appointment.status || "PENDIENTE"}
-        </span>
+        <AppointmentStatusBadge status={appointment.status} />
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
             Fecha
           </p>
-          <p className="mt-2 text-sm text-slate-800">
+          <p className="mt-1 text-sm text-slate-800">
             {formatDateTime(appointment.startsAt)}
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
             Fin
           </p>
-          <p className="mt-2 text-sm text-slate-800">
+          <p className="mt-1 text-sm text-slate-800">
             {formatDateTime(appointment.endsAt)}
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Origen
-          </p>
-          <p className="mt-2 text-sm text-slate-800">
-            {appointment.bookedSource || "No informado"}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
             Observaciones
           </p>
-          <p className="mt-2 text-sm text-slate-800">
+          <p className="mt-1 line-clamp-2 text-sm text-slate-800">
             {appointment.observations || "Sin observaciones"}
           </p>
         </div>
@@ -91,7 +177,84 @@ function AppointmentCard({
   );
 }
 
+function UpcomingAppointmentsTable({
+  appointments,
+  petNameById,
+}: {
+  appointments: AppointmentItem[];
+  petNameById: Map<string, string>;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-slate-200 bg-slate-50/80 hover:bg-slate-50/80">
+              <TableHead className="h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Mascota
+              </TableHead>
+              <TableHead className="h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Motivo
+              </TableHead>
+              <TableHead className="h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Fecha
+              </TableHead>
+              <TableHead className="h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Inicio
+              </TableHead>
+              <TableHead className="h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Estado
+              </TableHead>
+              <TableHead className="h-10 min-w-[180px] text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Observaciones
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {appointments.map((appointment) => (
+              <TableRow
+                key={appointment.id}
+                className="border-b border-slate-200 hover:bg-slate-50/60"
+              >
+                <TableCell className="py-3 text-sm font-medium text-slate-900">
+                  {petNameById.get(appointment.petId ?? "") || "Mascota"}
+                </TableCell>
+
+                <TableCell className="max-w-[240px] py-3 text-sm text-slate-600">
+                  <span className="line-clamp-2">
+                    {appointment.reason || "Sin motivo informado"}
+                  </span>
+                </TableCell>
+
+                <TableCell className="whitespace-nowrap py-3 text-sm text-slate-700">
+                  {formatDate(appointment.startsAt)}
+                </TableCell>
+
+                <TableCell className="whitespace-nowrap py-3 text-sm text-slate-700">
+                  {formatTime(appointment.startsAt)}
+                </TableCell>
+
+                <TableCell className="py-3">
+                  <AppointmentStatusBadge status={appointment.status} />
+                </TableCell>
+
+                <TableCell className="max-w-[240px] py-3 text-sm text-slate-600">
+                  <span className="line-clamp-2">
+                    {appointment.observations || "Sin observaciones"}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 export function AppointmentsPage() {
+  const [activeTab, setActiveTab] = useState("upcoming");
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [pets, setPets] = useState<PetItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,90 +291,125 @@ export function AppointmentsPage() {
     return new Map(pets.map((pet) => [pet.id, pet.name]));
   }, [pets]);
 
-  const now = new Date();
+  const nowTimestamp = Date.now();
 
-  const upcomingAppointments = appointments.filter((appointment) => {
-    if (!appointment.startsAt) return false;
-    return new Date(appointment.startsAt).getTime() >= now.getTime();
-  });
+  const upcomingAppointments = useMemo(() => {
+    return appointments
+      .filter((appointment) => {
+        if (!appointment.startsAt) return false;
+        return new Date(appointment.startsAt).getTime() >= nowTimestamp;
+      })
+      .sort((leftAppointment, rightAppointment) => {
+        const leftDate = leftAppointment.startsAt
+          ? new Date(leftAppointment.startsAt).getTime()
+          : 0;
+        const rightDate = rightAppointment.startsAt
+          ? new Date(rightAppointment.startsAt).getTime()
+          : 0;
 
-  const historyAppointments = appointments.filter((appointment) => {
-    if (!appointment.startsAt) return true;
-    return new Date(appointment.startsAt).getTime() < now.getTime();
-  });
+        return leftDate - rightDate;
+      });
+  }, [appointments, nowTimestamp]);
+
+  const historyAppointments = useMemo(() => {
+    return appointments
+      .filter((appointment) => {
+        if (!appointment.startsAt) return true;
+        return new Date(appointment.startsAt).getTime() < nowTimestamp;
+      })
+      .sort((leftAppointment, rightAppointment) => {
+        const leftDate = leftAppointment.startsAt
+          ? new Date(leftAppointment.startsAt).getTime()
+          : 0;
+        const rightDate = rightAppointment.startsAt
+          ? new Date(rightAppointment.startsAt).getTime()
+          : 0;
+
+        return rightDate - leftDate;
+      });
+  }, [appointments, nowTimestamp]);
+
+  const handleAppointmentCreated = async () => {
+    await loadData();
+    setActiveTab("upcoming");
+  };
 
   return (
-    <div className="w-full">
-      <div className="mx-auto w-full max-w-7xl space-y-5">
-        <AppointmentHeader />
+    <section className="space-y-4">
+      <AppointmentHeader />
 
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-          <Tabs defaultValue="upcoming" className="w-full">
-            <TabsList className="mb-5 grid w-full grid-cols-3 rounded-2xl bg-slate-100 p-1">
-              <TabsTrigger value="upcoming" className="rounded-xl">
-                <CalendarClock className="mr-2 h-4 w-4" />
-                Próximas citas
-              </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl">
-                <History className="mr-2 h-4 w-4" />
-                Historial
-              </TabsTrigger>
-              <TabsTrigger value="booking" className="rounded-xl">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Reservar cita
-              </TabsTrigger>
-            </TabsList>
+      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid h-11 w-full grid-cols-3 rounded-full bg-slate-100 p-1">
+            <TabsTrigger
+              value="upcoming"
+              className="h-full rounded-full border border-transparent px-3 text-sm font-medium shadow-none outline-none ring-0 transition-all focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <CalendarClock className="mr-2 h-4 w-4 shrink-0" />
+              Próximas citas
+            </TabsTrigger>
 
-            <TabsContent value="upcoming" className="space-y-4">
-              {isLoading ? (
-                <div className="h-44 rounded-[1.5rem] border border-slate-200 bg-slate-50" />
-              ) : loadError ? (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
-                  {loadError}
-                </div>
-              ) : upcomingAppointments.length ? (
-                upcomingAppointments.map((appointment) => (
-                  <AppointmentCard
+            <TabsTrigger
+              value="history"
+              className="h-full rounded-full border border-transparent px-3 text-sm font-medium shadow-none outline-none ring-0 transition-all focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <History className="mr-2 h-4 w-4 shrink-0" />
+              Historial
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="booking"
+              className="h-full rounded-full border border-transparent px-3 text-sm font-medium shadow-none outline-none ring-0 transition-all focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <PlusCircle className="mr-2 h-4 w-4 shrink-0" />
+              Reservar cita
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="upcoming" className="mt-4">
+            {isLoading ? (
+              <EmptyState message="Cargando próximas citas..." />
+            ) : loadError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {loadError}
+              </div>
+            ) : upcomingAppointments.length ? (
+              <UpcomingAppointmentsTable
+                appointments={upcomingAppointments}
+                petNameById={petNameById}
+              />
+            ) : (
+              <EmptyState message="No tienes próximas citas registradas." />
+            )}
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-4">
+            {isLoading ? (
+              <EmptyState message="Cargando historial..." />
+            ) : loadError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {loadError}
+              </div>
+            ) : historyAppointments.length ? (
+              <div className="space-y-3">
+                {historyAppointments.map((appointment) => (
+                  <HistoryAppointmentCard
                     key={appointment.id}
                     appointment={appointment}
                     petName={petNameById.get(appointment.petId ?? "") || "Mascota"}
                   />
-                ))
-              ) : (
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 px-5 py-8 text-center text-sm text-slate-500">
-                  No tienes próximas citas registradas.
-                </div>
-              )}
-            </TabsContent>
+                ))}
+              </div>
+            ) : (
+              <EmptyState message="Aún no tienes historial de citas." />
+            )}
+          </TabsContent>
 
-            <TabsContent value="history" className="space-y-4">
-              {isLoading ? (
-                <div className="h-44 rounded-[1.5rem] border border-slate-200 bg-slate-50" />
-              ) : loadError ? (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
-                  {loadError}
-                </div>
-              ) : historyAppointments.length ? (
-                historyAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    petName={petNameById.get(appointment.petId ?? "") || "Mascota"}
-                  />
-                ))
-              ) : (
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 px-5 py-8 text-center text-sm text-slate-500">
-                  Aún no tienes historial de citas.
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="booking">
-              <AppointmentBookingForm onCreated={loadData} />
-            </TabsContent>
-          </Tabs>
-        </section>
-      </div>
-    </div>
+          <TabsContent value="booking" className="mt-4">
+            <AppointmentBookingForm onCreated={handleAppointmentCreated} />
+          </TabsContent>
+        </Tabs>
+      </section>
+    </section>
   );
 }

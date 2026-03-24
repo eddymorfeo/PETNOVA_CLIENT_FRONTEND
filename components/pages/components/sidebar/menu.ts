@@ -55,17 +55,15 @@ export const clientSidebarMenu: ClientSidebarItem[] = [
     title: "Ficha clínica",
     icon: ClipboardList,
     items: [
-      { title: "Consultas médicas", href: "/home/medical-records" },
-      { title: "Tratamientos", href: "/home/treatments" },
-      { title: "Recetas", href: "/home/prescriptions" },
+      { title: "Consultas médicas", href: "/home/consultations" },
     ],
   },
-  {
-    title: "Vacunas y controles",
-    icon: Syringe,
-    items: [
-      { title: "Vacunas", href: "/home/vaccines" },
-      { title: "Recordatorios", href: "/home/reminders" },
-    ],
-  },
+  // {
+  //   title: "Vacunas y controles",
+  //   icon: Syringe,
+  //   items: [
+  //     { title: "Vacunas", href: "/home/vaccines" },
+  //     { title: "Recordatorios", href: "/home/reminders" },
+  //   ],
+  // },
 ];

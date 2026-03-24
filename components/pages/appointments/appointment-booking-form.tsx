@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Info, Mail, PawPrint, ShieldCheck, UserRound } from "lucide-react";
+import {
+  CalendarDays,
+  Info,
+  Mail,
+  PawPrint,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -40,6 +47,8 @@ type AppointmentBookingFormProps = {
   onCreated?: () => Promise<void> | void;
 };
 
+const EMPTY_SELECT_VALUE = "__empty__";
+
 function FieldLabel({
   htmlFor,
   children,
@@ -53,6 +62,12 @@ function FieldLabel({
     </label>
   );
 }
+
+const selectTriggerClassName =
+  "!h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus:ring-2 focus:ring-cyan-200 focus:ring-offset-0";
+
+const selectContentClassName =
+  "rounded-xl border border-slate-200 bg-white shadow-xl";
 
 export function AppointmentBookingForm({
   onCreated,
@@ -121,8 +136,12 @@ export function AppointmentBookingForm({
       }
     };
 
-    loadInitialData();
+    void loadInitialData();
   }, []);
+
+  useEffect(() => {
+    form.setValue("appointmentTime", "");
+  }, [selectedVeterinarianId, selectedAppointmentDate, form]);
 
   const selectedPet = useMemo(
     () => pets.find((pet) => pet.id === selectedPetId),
@@ -138,6 +157,18 @@ export function AppointmentBookingForm({
     () => appointmentTypes.find((item) => item.id === selectedAppointmentTypeId),
     [appointmentTypes, selectedAppointmentTypeId],
   );
+
+  const inputClassName =
+    "h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm";
+
+  const selectTriggerClassName =
+    "!h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus:ring-2 focus:ring-cyan-200 focus:ring-offset-0";
+
+  const selectContentClassName =
+    "rounded-xl border border-slate-200 bg-white shadow-xl";
+
+  const selectItemClassName =
+    "text-sm text-slate-700 focus:bg-slate-50 focus:text-slate-900";
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -158,7 +189,7 @@ export function AppointmentBookingForm({
 
   if (isBootLoading) {
     return (
-      <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
         <div className="space-y-4">
           <div className="h-6 w-56 rounded bg-slate-100" />
           <div className="grid gap-4 md:grid-cols-2">
@@ -175,11 +206,11 @@ export function AppointmentBookingForm({
   return (
     <section
       id="reservar-cita"
-      className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm"
+      className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100">
-          <CalendarDays className="h-4.5 w-4.5" />
+          <CalendarDays className="h-4 w-4" />
         </div>
 
         <div>
@@ -208,7 +239,7 @@ export function AppointmentBookingForm({
       <form onSubmit={onSubmit} className="mt-6 space-y-6">
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-5">
-            <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
+            <section className="rounded-[1.25rem] border border-slate-200 bg-slate-50/60 p-5">
               <div className="mb-4 flex items-center gap-2">
                 <UserRound className="h-4 w-4 text-cyan-700" />
                 <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-700">
@@ -219,27 +250,43 @@ export function AppointmentBookingForm({
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <FieldLabel>Nombre</FieldLabel>
-                  <Input value={client?.fullName ?? ""} disabled className="h-11 rounded-2xl border-slate-200 bg-white" />
+                  <Input
+                    value={client?.fullName ?? ""}
+                    disabled
+                    className={inputClassName}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <FieldLabel>Correo</FieldLabel>
-                  <Input value={client?.email ?? ""} disabled className="h-11 rounded-2xl border-slate-200 bg-white" />
+                  <Input
+                    value={client?.email ?? ""}
+                    disabled
+                    className={inputClassName}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <FieldLabel>Teléfono</FieldLabel>
-                  <Input value={client?.phone ?? ""} disabled className="h-11 rounded-2xl border-slate-200 bg-white" />
+                  <Input
+                    value={client?.phone ?? ""}
+                    disabled
+                    className={inputClassName}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <FieldLabel>Documento</FieldLabel>
-                  <Input value={client?.documentId ?? ""} disabled className="h-11 rounded-2xl border-slate-200 bg-white" />
+                  <Input
+                    value={client?.documentId ?? ""}
+                    disabled
+                    className={inputClassName}
+                  />
                 </div>
               </div>
             </section>
 
-            <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+            <section className="rounded-[1.25rem] border border-slate-200 bg-white p-5">
               <div className="mb-4 flex items-center gap-2">
                 <PawPrint className="h-4 w-4 text-cyan-700" />
                 <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-700">
@@ -256,22 +303,38 @@ export function AppointmentBookingForm({
                     rules={{ required: "Debes seleccionar una mascota." }}
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value || EMPTY_SELECT_VALUE}
+                        onValueChange={(value) =>
+                          field.onChange(
+                            value === EMPTY_SELECT_VALUE ? "" : value,
+                          )
+                        }
                         disabled={!pets.length}
                       >
-                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                        <SelectTrigger className={selectTriggerClassName}>
                           <SelectValue
                             placeholder={
                               pets.length
-                                ? "Selecciona una mascota"
+                                ? "Seleccionar una opción"
                                 : "No tienes mascotas registradas"
                             }
                           />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={selectContentClassName}>
+                          {pets.length > 0 && (
+                            <SelectItem
+                              value={EMPTY_SELECT_VALUE}
+                              className={selectItemClassName}
+                            >
+                              Seleccionar una opción
+                            </SelectItem>
+                          )}
                           {pets.map((pet) => (
-                            <SelectItem key={pet.id} value={pet.id}>
+                            <SelectItem
+                              key={pet.id}
+                              value={pet.id}
+                              className={selectItemClassName}
+                            >
                               {pet.name}
                             </SelectItem>
                           ))}
@@ -289,16 +352,30 @@ export function AppointmentBookingForm({
                     rules={{ required: "Debes seleccionar un tipo de atención." }}
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value || EMPTY_SELECT_VALUE}
+                        onValueChange={(value) =>
+                          field.onChange(
+                            value === EMPTY_SELECT_VALUE ? "" : value,
+                          )
+                        }
                         disabled={isLoadingCatalogs}
                       >
-                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
-                          <SelectValue placeholder="Selecciona un tipo de atención" />
+                        <SelectTrigger className={selectTriggerClassName}>
+                          <SelectValue placeholder="Seleccionar una opción" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={selectContentClassName}>
+                          <SelectItem
+                            value={EMPTY_SELECT_VALUE}
+                            className={selectItemClassName}
+                          >
+                            Seleccionar una opción
+                          </SelectItem>
                           {appointmentTypes.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
+                            <SelectItem
+                              key={item.id}
+                              value={item.id}
+                              className={selectItemClassName}
+                            >
                               {item.name}
                             </SelectItem>
                           ))}
@@ -316,16 +393,30 @@ export function AppointmentBookingForm({
                     rules={{ required: "Debes seleccionar un veterinario." }}
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value || EMPTY_SELECT_VALUE}
+                        onValueChange={(value) =>
+                          field.onChange(
+                            value === EMPTY_SELECT_VALUE ? "" : value,
+                          )
+                        }
                         disabled={isLoadingCatalogs}
                       >
-                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
-                          <SelectValue placeholder="Selecciona un veterinario" />
+                        <SelectTrigger className={selectTriggerClassName}>
+                          <SelectValue placeholder="Seleccionar una opción" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={selectContentClassName}>
+                          <SelectItem
+                            value={EMPTY_SELECT_VALUE}
+                            className={selectItemClassName}
+                          >
+                            Seleccionar una opción
+                          </SelectItem>
                           {veterinarians.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
+                            <SelectItem
+                              key={item.id}
+                              value={item.id}
+                              className={selectItemClassName}
+                            >
                               {item.fullName}
                             </SelectItem>
                           ))}
@@ -340,7 +431,7 @@ export function AppointmentBookingForm({
                   <Input
                     id="appointmentDate"
                     type="date"
-                    className="h-11 rounded-2xl border-slate-200 bg-white"
+                    className={inputClassName}
                     {...form.register("appointmentDate", {
                       required: "Debes seleccionar una fecha.",
                     })}
@@ -355,22 +446,42 @@ export function AppointmentBookingForm({
                     rules={{ required: "Debes seleccionar un horario." }}
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={!selectedVeterinarianId || !selectedAppointmentDate || isLoadingTimes}
+                        value={field.value || EMPTY_SELECT_VALUE}
+                        onValueChange={(value) =>
+                          field.onChange(
+                            value === EMPTY_SELECT_VALUE ? "" : value,
+                          )
+                        }
+                        disabled={
+                          !selectedVeterinarianId ||
+                          !selectedAppointmentDate ||
+                          isLoadingTimes
+                        }
                       >
-                        <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-white">
+                        <SelectTrigger className={selectTriggerClassName}>
                           <SelectValue
                             placeholder={
                               isLoadingTimes
                                 ? "Cargando horarios..."
-                                : "Selecciona un horario"
+                                : "Seleccionar una opción"
                             }
                           />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={selectContentClassName}>
+                          {!isLoadingTimes && (
+                            <SelectItem
+                              value={EMPTY_SELECT_VALUE}
+                              className={selectItemClassName}
+                            >
+                              Seleccionar una opción
+                            </SelectItem>
+                          )}
                           {availableTimes.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
+                            <SelectItem
+                              key={item.value}
+                              value={item.value}
+                              className={selectItemClassName}
+                            >
                               {item.label}
                             </SelectItem>
                           ))}
@@ -388,7 +499,7 @@ export function AppointmentBookingForm({
                   <Textarea
                     id="reason"
                     placeholder="Describe brevemente el motivo de la atención"
-                    className="min-h-[110px] rounded-[1.5rem] border-slate-200 bg-white px-4 py-3"
+                    className="min-h-[110px] rounded-[1.25rem] border-slate-200 bg-white px-4 py-3"
                     {...form.register("reason", {
                       required: "Debes indicar el motivo de la consulta.",
                     })}
@@ -400,14 +511,14 @@ export function AppointmentBookingForm({
                   <Textarea
                     id="observations"
                     placeholder="Información adicional opcional"
-                    className="min-h-[120px] rounded-[1.5rem] border-slate-200 bg-white px-4 py-3"
+                    className="min-h-[120px] rounded-[1.25rem] border-slate-200 bg-white px-4 py-3"
                     {...form.register("observations")}
                   />
                 </div>
               </div>
             </section>
 
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-sm">
+            <div className="rounded-[1.25rem] border border-slate-200 bg-white px-5 py-5 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-3 text-sm text-slate-600">
                   <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
@@ -428,14 +539,16 @@ export function AppointmentBookingForm({
                   type="submit"
                   size="lg"
                   disabled={form.formState.isSubmitting || !pets.length}
-                  className="h-12 rounded-full bg-slate-950 px-8 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
+                  className="h-11 rounded-full bg-slate-950 px-8 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
                 >
-                  {form.formState.isSubmitting ? "Registrando..." : "Confirmar reserva"}
+                  {form.formState.isSubmitting
+                    ? "Registrando..."
+                    : "Confirmar reserva"}
                 </Button>
               </div>
             </div>
 
-            <div className="rounded-[1.5rem] border border-cyan-100 bg-cyan-50/70 px-4 py-4 text-sm text-slate-600">
+            <div className="rounded-[1.25rem] border border-cyan-100 bg-cyan-50/70 px-4 py-4 text-sm text-slate-600">
               <div className="flex items-start gap-3">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
                 <p className="leading-6">
@@ -447,10 +560,10 @@ export function AppointmentBookingForm({
           </div>
 
           <div className="space-y-5">
-            <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                  <ShieldCheck className="h-4.5 w-4.5" />
+                  <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-slate-950">
@@ -463,7 +576,7 @@ export function AppointmentBookingForm({
               </div>
 
               <div className="mt-5 space-y-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Mascota
                   </p>
@@ -472,7 +585,7 @@ export function AppointmentBookingForm({
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Veterinario
                   </p>
@@ -481,7 +594,7 @@ export function AppointmentBookingForm({
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Tipo de atención
                   </p>
@@ -490,7 +603,7 @@ export function AppointmentBookingForm({
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Fecha y hora
                   </p>
@@ -498,7 +611,7 @@ export function AppointmentBookingForm({
                     {selectedAppointmentDate || "Sin fecha"}
                   </p>
                   <p className="mt-1 text-sm text-slate-700">
-                    {form.getValues("appointmentTime") || "Sin horario"}
+                    {form.watch("appointmentTime") || "Sin horario"}
                   </p>
                 </div>
               </div>
