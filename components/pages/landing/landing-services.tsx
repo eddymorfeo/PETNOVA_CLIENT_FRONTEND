@@ -43,9 +43,6 @@ export function LandingServices() {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <LandingReveal>
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-600">
-              Servicios
-            </p>
 
             <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-slate-950 sm:text-5xl">
               Cuidado integral para cada etapa de tu mascota.

@@ -46,36 +46,6 @@ export function AppointmentGuestHeader() {
             </Link>
           </Button>
         </div>
-
-        <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-r from-cyan-50/70 via-white to-sky-50/70 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-          <div className="px-6 py-8 lg:px-8 lg:py-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 shadow-sm">
-              <CalendarDays className="h-3.5 w-3.5" />
-              Agenda tu atención veterinaria en línea
-            </div>
-
-            <h1 className="mt-4 max-w-3xl text-[2.15rem] font-bold tracking-tight text-slate-950 sm:text-[2.5rem] lg:text-[3.1rem] lg:leading-[1.06]">
-              Reserva una cita para tu mascota de forma simple y clara
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-[15px]">
-              Completa la información del tutor, la mascota y el horario disponible.
-              Luego podrás confirmar la reserva y recibir la notificación por correo.
-            </p>
-
-            <div className="mt-5 flex flex-wrap gap-2.5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-xs font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm">
-                <ShieldCheck className="h-4 w-4 text-cyan-700" />
-                Reserva segura
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-xs font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm">
-                <Clock3 className="h-4 w-4 text-cyan-700" />
-                Confirmación por correo
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </motion.header>
   );

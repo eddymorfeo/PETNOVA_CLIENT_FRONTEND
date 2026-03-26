@@ -30,18 +30,6 @@ export function LandingFooter() {
           >
             Reservar hora
           </Link>
-          <Link
-            href="/terms-of-service"
-            className="transition hover:text-cyan-300"
-          >
-            Términos
-          </Link>
-          <Link
-            href="/privacy-policy"
-            className="transition hover:text-cyan-300"
-          >
-            Privacidad
-          </Link>
         </div>
       </div>
     </footer>

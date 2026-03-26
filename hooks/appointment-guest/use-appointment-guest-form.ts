@@ -50,7 +50,9 @@ export function useAppointmentGuestForm() {
       setSubmitSuccessMessage(
         response.message || "Reserva registrada correctamente."
       );
+
       form.reset(defaultValues);
+      form.clearErrors();
     } catch (error) {
       const errorMessage =
         error instanceof Error

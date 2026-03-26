@@ -142,13 +142,23 @@ export function AppointmentGuestForm() {
     (!!form.formState.touchedFields.appointmentTime ||
       form.formState.submitCount > 0);
 
-  useEffect(() => {
-    form.setValue("petBreed", "", { shouldValidate: true });
-  }, [selectedSpeciesId, form]);
+useEffect(() => {
+  form.setValue("petBreed", "", {
+    shouldValidate: false,
+    shouldDirty: false,
+    shouldTouch: false,
+  });
+  form.clearErrors("petBreed");
+}, [selectedSpeciesId, form]);
 
-  useEffect(() => {
-    form.setValue("appointmentTime", "", { shouldValidate: true });
-  }, [selectedVeterinarianId, selectedAppointmentDate, form]);
+useEffect(() => {
+  form.setValue("appointmentTime", "", {
+    shouldValidate: false,
+    shouldDirty: false,
+    shouldTouch: false,
+  });
+  form.clearErrors("appointmentTime");
+}, [selectedVeterinarianId, selectedAppointmentDate, form]);
 
   return (
     <motion.div

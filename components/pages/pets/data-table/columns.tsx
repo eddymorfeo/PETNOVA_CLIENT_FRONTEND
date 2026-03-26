@@ -107,17 +107,6 @@ export function createPetColumns({
       enableSorting: true,
     },
     {
-      id: "microchip",
-      header: "Microchip",
-      accessorFn: (row) => formatText(row.microchip, "No registrado"),
-      cell: ({ row }) => (
-        <span className="text-sm text-slate-700">
-          {formatText(row.original.microchip, "No registrado")}
-        </span>
-      ),
-      enableSorting: true,
-    },
-    {
       id: "isSterilized",
       header: ({ column }) => (
         <Button

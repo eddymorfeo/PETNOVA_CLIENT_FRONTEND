@@ -18,7 +18,7 @@ const showcaseItems = [
   },
   {
     title: "Notificaciones por correo",
-    description: "Recibe confirmaciones y avisos relevantes.",
+    description: "Recibe confirmaciones y avisos relevantes de tus agendamientos y mascotas.",
     icon: Mail,
   },
 ];
@@ -29,9 +29,6 @@ export function LandingAbout() {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <LandingReveal>
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-300">
-              Nosotros
-            </p>
 
             <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] sm:text-5xl">
               Atención cercana, organizada y centrada en cada mascota.
@@ -96,22 +93,7 @@ export function LandingAbout() {
             </div>
           </LandingReveal>
 
-          <AnimatedGroup className="grid gap-5 sm:grid-cols-3" delay={0.08}>
-            {[
-              "Reservas claras",
-              "Seguimiento ordenado",
-              "Información centralizada",
-            ].map((label) => (
-              <AnimatedItem key={label}>
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="rounded-[24px] border border-white/10 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-200"
-                >
-                  {label}
-                </motion.div>
-              </AnimatedItem>
-            ))}
-          </AnimatedGroup>
+
         </div>
       </div>
     </section>

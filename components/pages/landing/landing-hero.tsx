@@ -46,7 +46,7 @@ export function LandingHero() {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:80px_80px] opacity-25" />
 
       <div className="relative mx-auto flex min-h-[980px] w-full max-w-7xl flex-col justify-center px-4 pb-24 pt-36 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid items-center gap-14">
           <AnimatedGroup>
             <AnimatedItem>
               <div className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
@@ -108,58 +108,6 @@ export function LandingHero() {
               </div>
             </AnimatedItem>
           </AnimatedGroup>
-
-          <LandingReveal delay={0.15} x={30}>
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="relative mx-auto w-full max-w-[520px]"
-            >
-              <div className="absolute -inset-8 rounded-[40px] bg-cyan-500/10 blur-3xl" />
-
-              <div className="relative rounded-[34px] border border-white/10 bg-white/5 p-5 shadow-[0_30px_90px_-24px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-                <div className="mb-4 flex items-center gap-2 px-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-300/80" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/80" />
-                </div>
-
-                <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-6">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
-                    Tu clínica veterinaria en línea
-                  </p>
-
-                  <h2 className="mt-3 text-3xl font-black leading-tight tracking-[-0.03em] text-white">
-                    Un portal diseñado para reservar, organizar y dar
-                    seguimiento.
-                  </h2>
-
-                  <p className="mt-4 text-sm leading-7 text-slate-300">
-                    Una experiencia digital pensada para que la gestión de
-                    reservas y mascotas se sienta simple, consistente y moderna.
-                  </p>
-
-                  <AnimatedGroup className="mt-6 space-y-3" delay={0.1}>
-                    {featureCards.map((item) => (
-                      <AnimatedItem key={item.title}>
-                        <motion.div
-                          whileHover={{ y: -3, scale: 1.01 }}
-                          className="rounded-[20px] border border-white/10 bg-white/5 p-4"
-                        >
-                          <h3 className="text-sm font-bold text-white sm:text-base">
-                            {item.title}
-                          </h3>
-                          <p className="mt-1 text-sm leading-6 text-slate-300">
-                            {item.description}
-                          </p>
-                        </motion.div>
-                      </AnimatedItem>
-                    ))}
-                  </AnimatedGroup>
-                </div>
-              </div>
-            </motion.div>
-          </LandingReveal>
         </div>
 
         <AnimatedGroup className="mt-16 grid gap-4 sm:grid-cols-3" delay={0.1}>
