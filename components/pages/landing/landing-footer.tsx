@@ -3,21 +3,44 @@ import { PawPrint } from "lucide-react";
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-slate-200/80 bg-white/70 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-slate-600 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+    <footer className="bg-slate-950 text-white">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-cyan-50 ring-1 ring-cyan-100">
-            <PawPrint className="size-4 text-cyan-700" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300">
+            <PawPrint className="size-5" />
           </div>
-          <span>© 2026 PETNOVA. Todos los derechos reservados.</span>
+
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-white">
+              PETNOVA
+            </p>
+            <p className="text-xs text-slate-400">
+              © 2026 PETNOVA. Todos los derechos reservados.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-5">
-          <Link href="/login" className="transition hover:text-cyan-700">
+        <div className="flex flex-wrap items-center gap-6 text-sm text-slate-300">
+          <Link href="/login" className="transition hover:text-cyan-300">
             Portal cliente
           </Link>
-          <Link href="/appointment-guest" className="transition hover:text-cyan-700">
+          <Link
+            href="/appointment-guest"
+            className="transition hover:text-cyan-300"
+          >
             Reservar hora
+          </Link>
+          <Link
+            href="/terms-of-service"
+            className="transition hover:text-cyan-300"
+          >
+            Términos
+          </Link>
+          <Link
+            href="/privacy-policy"
+            className="transition hover:text-cyan-300"
+          >
+            Privacidad
           </Link>
         </div>
       </div>

@@ -1,110 +1,119 @@
 "use client";
 
-import {
-  BellRing,
-  CalendarDays,
-  ClipboardList,
-  PawPrint,
-  ShieldCheck,
-  Syringe,
-} from "lucide-react";
-
+import { motion } from "framer-motion";
+import { ClipboardList, Mail, PawPrint } from "lucide-react";
 import { LandingReveal } from "./landing-reveal";
+import { AnimatedGroup, AnimatedItem } from "./landing-motion";
 
-const featureItems = [
+const showcaseItems = [
   {
-    title: "Reserva de horas médicas",
-    description: "Agenda atenciones desde una experiencia rápida y clara.",
-    icon: CalendarDays,
-  },
-  {
-    title: "Portal personalizado para clientes",
-    description: "Accede a tus mascotas, reservas e información relevante.",
+    title: "Portal de clientes",
+    description: "Accede a tus mascotas, reservas y datos importantes.",
     icon: PawPrint,
   },
   {
-    title: "Registro y administración de mascotas",
-    description: "Mantén centralizados los datos de cada paciente.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Historial clínico por mascota",
-    description: "Consulta controles, observaciones y seguimiento médico.",
+    title: "Historial clínico",
+    description: "Consulta controles, observaciones y seguimiento.",
     icon: ClipboardList,
   },
   {
     title: "Notificaciones por correo",
-    description: "Recibe confirmaciones y avisos importantes de cada atención.",
-    icon: BellRing,
-  },
-  {
-    title: "Seguimiento de vacunas y tratamientos",
-    description: "Visualiza procesos preventivos y clínicos de forma ordenada.",
-    icon: Syringe,
+    description: "Recibe confirmaciones y avisos relevantes.",
+    icon: Mail,
   },
 ];
 
 export function LandingAbout() {
   return (
-    <section id="about" className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-      <LandingReveal>
-        <div className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)] sm:p-8 lg:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 sm:text-sm">
-            Nosotros
-          </p>
+    <section id="nosotros" className="bg-slate-950 py-24 text-white">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <LandingReveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-300">
+              Nosotros
+            </p>
 
-          <h2 className="mt-4 text-balance text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-            Atención cercana, organizada y centrada en cada mascota.
-          </h2>
+            <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] sm:text-5xl">
+              Atención cercana, organizada y centrada en cada mascota.
+            </h2>
 
-          <p className="mt-5 text-base leading-8 text-slate-600">
-            PETNOVA combina atención veterinaria de calidad con una experiencia digital
-            más clara. Queremos que cada cliente gestione citas, mascotas e historial
-            clínico con confianza y orden.
-          </p>
-
-          <p className="mt-4 text-base leading-8 text-slate-600">
-            La plataforma está pensada para mejorar la comunicación con los tutores y
-            facilitar el seguimiento médico en cada etapa del cuidado veterinario.
-          </p>
-        </div>
-      </LandingReveal>
-
-      <LandingReveal delay={0.08}>
-        <div className="rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,#f3fbfd_0%,#ffffff_40%)] p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)] sm:p-8 lg:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 sm:text-sm">
-            Lo que podrás hacer desde tu portal
-          </p>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            Un espacio personalizado para gestionar la salud, reservas y atención de
-            tus mascotas desde cualquier dispositivo.
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {featureItems.map((item, index) => {
-              const Icon = item.icon;
-
-              return (
-                <LandingReveal key={item.title} delay={index * 0.05}>
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 transition hover:border-cyan-200 hover:bg-cyan-50/40">
-                    <div className="flex items-start gap-3">
-                      <div className="flex size-11 items-center justify-center rounded-2xl bg-cyan-50 ring-1 ring-cyan-100">
-                        <Icon className="size-5 text-cyan-700" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">{item.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </LandingReveal>
-              );
-            })}
+            <p className="mt-5 text-base leading-8 text-slate-300 sm:text-lg">
+              PETNOVA combina atención veterinaria de calidad con una
+              experiencia digital moderna, clara y coherente con una clínica
+              actual.
+            </p>
           </div>
+        </LandingReveal>
+
+        <AnimatedGroup
+          className="mt-16 grid gap-6 md:grid-cols-3"
+          delay={0.08}
+        >
+          {showcaseItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <AnimatedItem key={item.title}>
+                <motion.article
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                  className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.08, rotate: -6 }}
+                    transition={{ type: "spring", stiffness: 320, damping: 16 }}
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-white"
+                  >
+                    <Icon className="size-5" />
+                  </motion.div>
+
+                  <h3 className="mt-6 text-2xl font-bold">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                    {item.description}
+                  </p>
+                </motion.article>
+              </AnimatedItem>
+            );
+          })}
+        </AnimatedGroup>
+
+        <div className="mt-20 grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+          <LandingReveal x={-24}>
+            <div className="max-w-xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-300">
+                Enfoque PETNOVA
+              </p>
+
+              <h3 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em]">
+                Mejor organización, menos fricción y más confianza.
+              </h3>
+
+              <p className="mt-5 text-base leading-8 text-slate-300">
+                La plataforma fue diseñada para que el proceso completo se
+                sienta más ordenado: desde reservar una hora hasta revisar la
+                evolución clínica de cada mascota.
+              </p>
+            </div>
+          </LandingReveal>
+
+          <AnimatedGroup className="grid gap-5 sm:grid-cols-3" delay={0.08}>
+            {[
+              "Reservas claras",
+              "Seguimiento ordenado",
+              "Información centralizada",
+            ].map((label) => (
+              <AnimatedItem key={label}>
+                <motion.div
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  className="rounded-[24px] border border-white/10 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-200"
+                >
+                  {label}
+                </motion.div>
+              </AnimatedItem>
+            ))}
+          </AnimatedGroup>
         </div>
-      </LandingReveal>
+      </div>
     </section>
   );
 }

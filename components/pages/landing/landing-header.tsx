@@ -2,81 +2,82 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CalendarDays, Menu, PawPrint, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, PawPrint, UserRound } from "lucide-react";
 
-const navigationItems = [
-  { label: "Inicio", href: "/" },
-  { label: "Servicios", href: "#services" },
-  { label: "Nosotros", href: "#about" },
-  { label: "Contacto", href: "#contact" },
+const navItems = [
+  { label: "Inicio", href: "#inicio" },
+  { label: "Servicios", href: "#servicios" },
+  { label: "Nosotros", href: "#nosotros" },
+  { label: "Contacto", href: "#contacto" },
 ];
 
 export function LandingHeader() {
   return (
     <motion.header
-      initial={{ y: -18, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-2xl"
+      className="fixed inset-x-0 top-0 z-50"
+      initial={{ opacity: 0, y: -18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <a href="/" className="group flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl border border-cyan-100 bg-[linear-gradient(180deg,#f4feff_0%,#e9fbff_100%)] shadow-sm transition-transform duration-300 group-hover:scale-[1.03]">
-            <PawPrint className="size-5 text-cyan-700" />
-          </div>
+      <div className="mx-auto mt-4 flex w-[min(1200px,calc(100%-24px))] items-center justify-between rounded-full border border-white/10 bg-slate-950/65 px-4 py-3 shadow-[0_18px_60px_-24px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:px-6">
+        <Link href="/" className="flex items-center gap-3">
+          <motion.div
+            whileHover={{ scale: 1.06, rotate: -4 }}
+            transition={{ type: "spring", stiffness: 320, damping: 18 }}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/20"
+          >
+            <PawPrint className="size-5" />
+          </motion.div>
 
-          <div>
-            <p className="text-base font-black tracking-[0.14em] text-slate-950 sm:text-lg">
+          <div className="leading-tight">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-white">
               PETNOVA
             </p>
-            <p className="text-xs font-medium text-slate-500">Clínica veterinaria</p>
+            <p className="text-[11px] text-slate-300">Clínica veterinaria</p>
           </div>
-        </a>
+        </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-white/80 p-1 shadow-sm md:flex">
-          {navigationItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-            >
-              {item.label}
-            </a>
+        <nav className="hidden items-center gap-6 lg:flex">
+          {navItems.map((item) => (
+            <motion.div key={item.href} whileHover={{ y: -1 }}>
+              <Link
+                href={item.href}
+                className="text-sm font-medium text-slate-200 transition-colors hover:text-cyan-300"
+              >
+                {item.label}
+              </Link>
+            </motion.div>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button
-            asChild
-            variant="outline"
-            className="h-11 rounded-full border-slate-200 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50"
+        <div className="flex items-center gap-2">
+          <motion.div
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="hidden md:block"
           >
-            <Link href="/login">
-              <UserRound className="mr-2 size-4" />
-              Iniciar sesión
+            <Link
+              href="/login"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-4 font-semibold text-white transition hover:bg-white/10"
+            >
+              <UserRound className="size-4 shrink-0" />
+              <span>Iniciar sesión</span>
             </Link>
-          </Button>
+          </motion.div>
 
-          <Button
-            asChild
-            className="h-11 rounded-full bg-slate-950 px-6 text-white shadow-[0_16px_30px_-18px_rgba(8,145,178,0.9)] hover:bg-slate-800"
+          <motion.div
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
           >
-            <Link href="/appointment-guest">
-              <CalendarDays className="mr-2 size-4" />
-              Reservar cita
+            <Link
+              href="/appointment-guest"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-cyan-500 px-5 font-semibold text-white shadow-[0_18px_42px_-20px_rgba(6,182,212,0.8)] transition hover:bg-cyan-400"
+            >
+              <CalendarDays className="size-4 shrink-0" />
+              <span>Reservar cita</span>
             </Link>
-          </Button>
+          </motion.div>
         </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-11 rounded-full border-slate-200 bg-white shadow-sm md:hidden"
-        >
-          <Menu className="size-5 text-slate-700" />
-        </Button>
       </div>
     </motion.header>
   );
