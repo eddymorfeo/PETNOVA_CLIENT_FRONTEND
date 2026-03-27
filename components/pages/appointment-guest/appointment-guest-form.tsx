@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -16,12 +16,13 @@ import {
 import { Controller, useWatch } from "react-hook-form";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+
 import { useAppointmentGuestAvailability } from "@/hooks/appointment-guest/use-appointment-guest-availability";
 import { useAppointmentGuestCatalogs } from "@/hooks/appointment-guest/use-appointment-guest-catalogs";
 import { useAppointmentGuestForm } from "@/hooks/appointment-guest/use-appointment-guest-form";
 import { useAppointmentGuestTodayAvailability } from "@/hooks/appointment-guest/use-appointment-guest-today-availability";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const EMPTY_OPTION_VALUE = "";
+const EMPTY_OPTION_VALUE = "__empty__";
 
 function getTodayDateString() {
   const today = new Date();
@@ -69,6 +70,14 @@ function formatDateToYmd(date: Date) {
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function normalizeSelectValue(value?: string | null): string {
+  return value ?? EMPTY_OPTION_VALUE;
+}
+
+function denormalizeSelectValue(value: string): string {
+  return value === EMPTY_OPTION_VALUE ? "" : value;
 }
 
 function SectionHeader({
@@ -118,9 +127,6 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-rose-500">{message}</p>;
 }
 
-const inputClassName =
-  "!h-10 w-full rounded-xl border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200";
-
 const textareaClassName =
   "w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-200";
 
@@ -133,17 +139,11 @@ const selectContentClassName =
 const selectItemClassName =
   "cursor-pointer rounded-lg text-sm text-slate-700 outline-none focus:bg-cyan-50 focus:text-slate-900 data-[state=checked]:bg-cyan-50 data-[state=checked]:text-slate-900";
 
-function normalizeSelectValue(value?: string | null) {
-  return value ?? EMPTY_OPTION_VALUE;
-}
-
-function denormalizeSelectValue(value: string) {
-  return value === EMPTY_OPTION_VALUE ? "" : value;
-}
-
 export function AppointmentGuestForm() {
   const { form, onSubmit, isSubmitting, submitError, submitSuccessMessage } =
     useAppointmentGuestForm();
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const selectedSpeciesId = useWatch({
     control: form.control,
@@ -158,6 +158,11 @@ export function AppointmentGuestForm() {
   const selectedAppointmentDate = useWatch({
     control: form.control,
     name: "appointmentDate",
+  });
+
+  const selectedPetName = useWatch({
+    control: form.control,
+    name: "petName",
   });
 
   const {
@@ -279,255 +284,50 @@ export function AppointmentGuestForm() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 px-6 py-6 lg:px-7">
-        {submitSuccessMessage && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {submitSuccessMessage}
-          </div>
-        )}
-
-        {submitError && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {submitError}
-          </div>
-        )}
-
         {catalogsError && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {catalogsError}
           </div>
         )}
 
-        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
-          <SectionHeader
-            icon={UserRound}
-            title="Datos de contacto"
-            description="Información principal del tutor o persona que solicita la atención."
-          />
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <FieldLabel htmlFor="contactName" required>
-                Nombre completo
-              </FieldLabel>
-              <Input
-                id="contactName"
-                placeholder="Ingresa tu nombre"
-                className={inputClassName}
-                {...form.register("contactName")}
-              />
-              <FieldError message={form.formState.errors.contactName?.message} />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel htmlFor="contactEmail" required>
-                Correo electrónico
-              </FieldLabel>
-              <Input
-                id="contactEmail"
-                type="email"
-                placeholder="correo@ejemplo.com"
-                className={inputClassName}
-                {...form.register("contactEmail")}
-              />
-              <FieldError
-                message={form.formState.errors.contactEmail?.message}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <FieldLabel htmlFor="contactPhone">Teléfono</FieldLabel>
-              <Input
-                id="contactPhone"
-                placeholder="+56 9 ..."
-                className={inputClassName}
-                {...form.register("contactPhone")}
-              />
-              <FieldError
-                message={form.formState.errors.contactPhone?.message}
-              />
-            </div>
-          </div>
-        </section>
-
         <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
           <SectionHeader
-            icon={Dog}
-            title="Datos de la mascota"
-            description="Completa la información básica del paciente que será atendido."
-          />
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <FieldLabel htmlFor="petName" required>
-                Nombre de la mascota
-              </FieldLabel>
-              <Input
-                id="petName"
-                placeholder="Ej: Luna"
-                className={inputClassName}
-                {...form.register("petName")}
-              />
-              <FieldError message={form.formState.errors.petName?.message} />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel required>Especie</FieldLabel>
-              <Controller
-                control={form.control}
-                name="petSpecies"
-                render={({ field }) => (
-                  <Select
-                    value={normalizeSelectValue(field.value)}
-                    onValueChange={(value) =>
-                      field.onChange(denormalizeSelectValue(value))
-                    }
-                    disabled={isLoadingCatalogs}
-                  >
-                    <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent className={selectContentClassName}>
-                      <SelectItem
-                        className={selectItemClassName}
-                        value={EMPTY_OPTION_VALUE}
-                      >
-                        Seleccionar
-                      </SelectItem>
-                      {speciesOptions.map((species) => (
-                        <SelectItem
-                          className={selectItemClassName}
-                          key={species.id}
-                          value={species.id}
-                        >
-                          {species.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError
-                message={form.formState.errors.petSpecies?.message}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel>Raza</FieldLabel>
-              <Controller
-                control={form.control}
-                name="petBreed"
-                render={({ field }) => (
-                  <Select
-                    value={normalizeSelectValue(field.value)}
-                    onValueChange={(value) =>
-                      field.onChange(denormalizeSelectValue(value))
-                    }
-                    disabled={!selectedSpeciesId || isLoadingBreeds}
-                  >
-                    <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue
-                        placeholder={
-                          !selectedSpeciesId
-                            ? "Selecciona especie"
-                            : isLoadingBreeds
-                              ? "Cargando razas..."
-                              : "Seleccionar raza"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent className={selectContentClassName}>
-                      <SelectItem
-                        className={selectItemClassName}
-                        value={EMPTY_OPTION_VALUE}
-                      >
-                        Seleccionar raza
-                      </SelectItem>
-                      {breedOptions.map((breed) => (
-                        <SelectItem
-                          className={selectItemClassName}
-                          key={breed.id}
-                          value={breed.id}
-                        >
-                          {breed.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError message={breedsError || form.formState.errors.petBreed?.message} />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel>Sexo</FieldLabel>
-              <Controller
-                control={form.control}
-                name="petSex"
-                render={({ field }) => (
-                  <Select
-                    value={normalizeSelectValue(field.value)}
-                    onValueChange={(value) =>
-                      field.onChange(denormalizeSelectValue(value))
-                    }
-                  >
-                    <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue placeholder="Seleccionar sexo" />
-                    </SelectTrigger>
-                    <SelectContent className={selectContentClassName}>
-                      <SelectItem
-                        className={selectItemClassName}
-                        value={EMPTY_OPTION_VALUE}
-                      >
-                        Seleccionar sexo
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemClassName}
-                        value="Macho"
-                      >
-                        Macho
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemClassName}
-                        value="Hembra"
-                      >
-                        Hembra
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel htmlFor="petAge">Edad aproximada</FieldLabel>
-              <Input
-                id="petAge"
-                placeholder="Ej: 2 años"
-                className={inputClassName}
-                {...form.register("petAge")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FieldLabel htmlFor="petWeightKg">Peso aproximado</FieldLabel>
-              <Input
-                id="petWeightKg"
-                placeholder="Ej: 12 kg"
-                className={inputClassName}
-                {...form.register("petWeightKg")}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
-          <SectionHeader
             icon={CalendarDays}
-            title="Atención y horario"
-            description="Selecciona el tipo de atención, profesional, fecha y bloque disponible."
+            title="Datos de la cita"
+            description="Selecciona mascota, tipo de atención, profesional, fecha y bloque disponible."
           />
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <FieldLabel>Mascota</FieldLabel>
+              <Controller
+                control={form.control}
+                name="petName"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar una opción" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        value={EMPTY_OPTION_VALUE}
+                        className={selectItemClassName}
+                      >
+                        Seleccionar una opción
+                      </SelectItem>
+
+                      {selectedPetName ? null : null}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
             <div className="space-y-2">
               <FieldLabel required>Tipo de atención</FieldLabel>
               <Controller
@@ -542,20 +342,21 @@ export function AppointmentGuestForm() {
                     disabled={isLoadingCatalogs}
                   >
                     <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Seleccionar una opción" />
                     </SelectTrigger>
                     <SelectContent className={selectContentClassName}>
                       <SelectItem
-                        className={selectItemClassName}
                         value={EMPTY_OPTION_VALUE}
+                        className={selectItemClassName}
                       >
-                        Seleccionar
+                        Seleccionar una opción
                       </SelectItem>
+
                       {appointmentTypes.map((appointmentType) => (
                         <SelectItem
-                          className={selectItemClassName}
                           key={appointmentType.id}
                           value={appointmentType.id}
+                          className={selectItemClassName}
                         >
                           {appointmentType.name}
                         </SelectItem>
@@ -583,20 +384,21 @@ export function AppointmentGuestForm() {
                     disabled={isLoadingCatalogs}
                   >
                     <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Seleccionar una opción" />
                     </SelectTrigger>
                     <SelectContent className={selectContentClassName}>
                       <SelectItem
-                        className={selectItemClassName}
                         value={EMPTY_OPTION_VALUE}
+                        className={selectItemClassName}
                       >
-                        Seleccionar
+                        Seleccionar una opción
                       </SelectItem>
+
                       {veterinarians.map((veterinarian) => (
                         <SelectItem
-                          className={selectItemClassName}
                           key={veterinarian.id}
                           value={veterinarian.id}
+                          className={selectItemClassName}
                         >
                           {veterinarian.fullName}
                         </SelectItem>
@@ -611,9 +413,7 @@ export function AppointmentGuestForm() {
             </div>
 
             <div className="space-y-2">
-              <FieldLabel htmlFor="appointmentDate" required>
-                Fecha
-              </FieldLabel>
+              <FieldLabel required>Fecha</FieldLabel>
 
               <Controller
                 control={form.control}
@@ -622,7 +422,10 @@ export function AppointmentGuestForm() {
                   const selectedDate = parseDateStringToLocalDate(field.value);
 
                   return (
-                    <Popover>
+                    <Popover
+                      open={isDatePickerOpen}
+                      onOpenChange={setIsDatePickerOpen}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           type="button"
@@ -668,11 +471,13 @@ export function AppointmentGuestForm() {
                               });
 
                               field.onChange("");
+                              setIsDatePickerOpen(false);
                               return;
                             }
 
                             form.clearErrors("appointmentDate");
                             field.onChange(nextValue);
+                            setIsDatePickerOpen(false);
                           }}
                           disabled={(date) => {
                             const normalizedDate = startOfDay(date);
@@ -721,9 +526,9 @@ export function AppointmentGuestForm() {
                 render={({ field }) => (
                   <Select
                     value={normalizeSelectValue(field.value)}
-                    onValueChange={(value) => {
-                      field.onChange(denormalizeSelectValue(value));
-                    }}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
                     disabled={!canSelectAppointmentTime}
                   >
                     <SelectTrigger className={selectTriggerClassName}>
@@ -803,22 +608,31 @@ export function AppointmentGuestForm() {
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-          <SectionHeader
-            icon={ShieldCheck}
-            title="Confirmación por correo electrónico"
-            description="Recibirás el detalle de tu reserva una vez que el registro se complete correctamente."
-          />
+        {submitError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
+            {submitError}
+          </div>
+        )}
 
-          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <Mail className="mt-0.5 h-4 w-4 text-slate-500" />
+        {submitSuccessMessage && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
+            {submitSuccessMessage}
+          </div>
+        )}
+
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3 text-sm text-slate-600">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
+                <Mail className="h-4 w-4" />
+              </div>
               <div>
-                <p className="font-medium text-slate-700">
-                  Confirmación de reserva
+                <p className="font-medium text-slate-800">
+                  Confirmación por correo electrónico
                 </p>
                 <p className="mt-1 leading-6">
-                  Te enviaremos el detalle de la cita a tu correo electrónico.
+                  Recibirás el detalle de tu reserva una vez que el registro se
+                  complete correctamente.
                 </p>
               </div>
             </div>
@@ -838,42 +652,17 @@ export function AppointmentGuestForm() {
               {isSubmitting ? "Registrando..." : "Confirmar reserva"}
             </Button>
           </div>
-        </section>
+        </div>
 
-        <section className="grid gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <Clock3 className="h-4 w-4 text-cyan-700" />
-              Tiempo estimado
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Las reservas se asignan según disponibilidad vigente del
-              veterinario y pueden variar por jornada.
+        <div className="rounded-[1.25rem] border border-cyan-100 bg-cyan-50/70 px-4 py-3.5 text-sm text-slate-600">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
+            <p className="leading-6">
+              La disponibilidad depende del profesional seleccionado, la fecha y
+              los bloques actualmente disponibles en el sistema.
             </p>
           </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <Info className="h-4 w-4 text-cyan-700" />
-              Información importante
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Verifica tus datos antes de confirmar para asegurar el envío del
-              correo de reserva y una correcta atención.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <ShieldCheck className="h-4 w-4 text-cyan-700" />
-              Disponibilidad real
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Los horarios mostrados se calculan según la disponibilidad activa
-              del veterinario y las reservas ya registradas.
-            </p>
-          </div>
-        </section>
+        </div>
       </form>
     </motion.div>
   );
