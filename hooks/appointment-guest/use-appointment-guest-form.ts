@@ -31,7 +31,9 @@ const defaultValues: AppointmentGuestSchemaData = {
 
 export function useAppointmentGuestForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null);
+  const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(
+    null
+  );
 
   const form = useForm<AppointmentGuestSchemaData>({
     resolver: zodResolver(appointmentGuestSchema),

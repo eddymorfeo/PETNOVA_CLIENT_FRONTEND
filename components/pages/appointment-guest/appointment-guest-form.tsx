@@ -29,7 +29,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const EMPTY_OPTION_VALUE = "__empty__";
+const EMPTY_OPTION_VALUE = "";
+
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 function SectionHeader({
   icon: Icon,
@@ -142,23 +151,32 @@ export function AppointmentGuestForm() {
     (!!form.formState.touchedFields.appointmentTime ||
       form.formState.submitCount > 0);
 
-useEffect(() => {
-  form.setValue("petBreed", "", {
-    shouldValidate: false,
-    shouldDirty: false,
-    shouldTouch: false,
-  });
-  form.clearErrors("petBreed");
-}, [selectedSpeciesId, form]);
+  const todayDate = getTodayDateString();
 
-useEffect(() => {
-  form.setValue("appointmentTime", "", {
-    shouldValidate: false,
-    shouldDirty: false,
-    shouldTouch: false,
-  });
-  form.clearErrors("appointmentTime");
-}, [selectedVeterinarianId, selectedAppointmentDate, form]);
+  const hasAvailableTimes = availableTimes.length > 0;
+  const canSelectAppointmentTime =
+    !!selectedVeterinarianId &&
+    !!selectedAppointmentDate &&
+    !isLoadingTimes &&
+    hasAvailableTimes;
+
+  useEffect(() => {
+    form.setValue("petBreed", "", {
+      shouldValidate: false,
+      shouldDirty: false,
+      shouldTouch: false,
+    });
+    form.clearErrors("petBreed");
+  }, [selectedSpeciesId, form]);
+
+  useEffect(() => {
+    form.setValue("appointmentTime", "", {
+      shouldValidate: false,
+      shouldDirty: false,
+      shouldTouch: false,
+    });
+    form.clearErrors("appointmentTime");
+  }, [selectedVeterinarianId, selectedAppointmentDate, form]);
 
   return (
     <motion.div
@@ -526,11 +544,22 @@ useEffect(() => {
                 <FieldLabel htmlFor="appointmentDate" required>
                   Fecha
                 </FieldLabel>
-                <Input
-                  id="appointmentDate"
-                  type="date"
-                  className={inputClassName}
-                  {...form.register("appointmentDate")}
+                <Controller
+                  control={form.control}
+                  name="appointmentDate"
+                  render={({ field }) => (
+                    <Input
+                      id="appointmentDate"
+                      type="date"
+                      min={todayDate}
+                      className={inputClassName}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  )}
                 />
                 <FieldError
                   message={form.formState.errors.appointmentDate?.message}
@@ -545,39 +574,31 @@ useEffect(() => {
                   render={({ field }) => (
                     <Select
                       value={normalizeSelectValue(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                      disabled={
-                        !selectedVeterinarianId ||
-                        !selectedAppointmentDate ||
-                        isLoadingTimes
-                      }
+                      onValueChange={(value) => {
+                        field.onChange(denormalizeSelectValue(value));
+                      }}
+                      disabled={!canSelectAppointmentTime}
                     >
                       <SelectTrigger className={selectTriggerClassName}>
                         <SelectValue
                           placeholder={
-                            isLoadingTimes
-                              ? "Cargando horarios..."
-                              : !selectedVeterinarianId ||
-                                  !selectedAppointmentDate
-                                ? "Selecciona veterinario y fecha"
-                                : "Seleccionar"
+                            !selectedVeterinarianId || !selectedAppointmentDate
+                              ? "Selecciona veterinario y fecha"
+                              : isLoadingTimes
+                                ? "Cargando horarios..."
+                                : hasAvailableTimes
+                                  ? "Seleccionar una opción"
+                                  : "No hay horarios disponibles"
                           }
                         />
                       </SelectTrigger>
+
                       <SelectContent className={selectContentClassName}>
-                        <SelectItem
-                          className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
-                        >
-                          Seleccionar
-                        </SelectItem>
                         {availableTimes.map((timeOption) => (
                           <SelectItem
-                            className={selectItemClassName}
                             key={timeOption.value}
                             value={timeOption.value}
+                            className={selectItemClassName}
                           >
                             {timeOption.label}
                           </SelectItem>
@@ -586,6 +607,25 @@ useEffect(() => {
                     </Select>
                   )}
                 />
+
+                {timesError && <FieldError message={timesError} />}
+
+                {!timesError &&
+                  selectedVeterinarianId &&
+                  selectedAppointmentDate &&
+                  !isLoadingTimes &&
+                  !hasAvailableTimes && (
+                    <p className="text-sm text-amber-600">
+                      No existen horarios disponibles para el veterinario y la
+                      fecha seleccionados.
+                    </p>
+                  )}
+
+                {shouldShowAppointmentTimeError && (
+                  <FieldError
+                    message={form.formState.errors.appointmentTime?.message}
+                  />
+                )}
                 <FieldError
                   message={
                     shouldShowAppointmentTimeError
@@ -653,7 +693,13 @@ useEffect(() => {
               <Button
                 type="submit"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  (Boolean(selectedVeterinarianId) &&
+                    Boolean(selectedAppointmentDate) &&
+                    !isLoadingTimes &&
+                    !hasAvailableTimes)
+                }
                 className="h-11 rounded-full bg-slate-950 px-7 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
               >
                 {isSubmitting ? "Registrando..." : "Confirmar reserva"}

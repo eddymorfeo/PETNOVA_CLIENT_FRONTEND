@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export const appointmentGuestSchema = z.object({
   contactName: z
     .string()
@@ -33,7 +42,12 @@ export const appointmentGuestSchema = z.object({
   veterinarianId: z
     .string()
     .min(1, "Debes seleccionar un veterinario."),
-  appointmentDate: z.string().min(1, "Debes seleccionar una fecha."),
+  appointmentDate: z
+    .string()
+    .min(1, "Debes seleccionar una fecha.")
+    .refine((value) => value >= getTodayDateString(), {
+      message: "No puedes seleccionar una fecha anterior a la actual.",
+    }),
   appointmentTime: z.string().min(1, "Debes seleccionar un horario."),
   reason: z
     .string()
