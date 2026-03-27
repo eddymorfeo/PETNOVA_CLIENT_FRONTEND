@@ -50,22 +50,6 @@ function formatTime(value?: string | null) {
   });
 }
 
-function formatDateTime(value?: string | null) {
-  if (!value) return "Sin fecha";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "Sin fecha";
-
-  return date.toLocaleString("es-CL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function getAppointmentStatusLabel(status?: string | null) {
   const normalizedStatus = status?.toUpperCase() ?? "";
 
@@ -123,61 +107,7 @@ function AppointmentStatusBadge({ status }: { status?: string | null }) {
   );
 }
 
-function HistoryAppointmentCard({
-  appointment,
-  petName,
-}: {
-  appointment: AppointmentItem;
-  petName: string;
-}) {
-  return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-slate-950">
-            {petName}
-          </h3>
-          <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-            {appointment.reason || "Sin motivo informado"}
-          </p>
-        </div>
-
-        <AppointmentStatusBadge status={appointment.status} />
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Fecha
-          </p>
-          <p className="mt-1 text-sm text-slate-800">
-            {formatDateTime(appointment.startsAt)}
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Fin
-          </p>
-          <p className="mt-1 text-sm text-slate-800">
-            {formatDateTime(appointment.endsAt)}
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Observaciones
-          </p>
-          <p className="mt-1 line-clamp-2 text-sm text-slate-800">
-            {appointment.observations || "Sin observaciones"}
-          </p>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function UpcomingAppointmentsTable({
+function AppointmentsTable({
   appointments,
   petNameById,
 }: {
@@ -374,7 +304,7 @@ export function AppointmentsPage() {
                 {loadError}
               </div>
             ) : upcomingAppointments.length ? (
-              <UpcomingAppointmentsTable
+              <AppointmentsTable
                 appointments={upcomingAppointments}
                 petNameById={petNameById}
               />
@@ -391,15 +321,10 @@ export function AppointmentsPage() {
                 {loadError}
               </div>
             ) : historyAppointments.length ? (
-              <div className="space-y-3">
-                {historyAppointments.map((appointment) => (
-                  <HistoryAppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    petName={petNameById.get(appointment.petId ?? "") || "Mascota"}
-                  />
-                ))}
-              </div>
+              <AppointmentsTable
+                appointments={historyAppointments}
+                petNameById={petNameById}
+              />
             ) : (
               <EmptyState message="Aún no tienes historial de citas." />
             )}

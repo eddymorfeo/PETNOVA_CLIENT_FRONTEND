@@ -12,10 +12,7 @@ import {
   Weight,
 } from "lucide-react";
 import type { MedicalRecordConsultation } from "@/types/medical-records/medical-records.types";
-import {
-  formatDate,
-  formatDateTime,
-} from "./medical-records-helpers";
+import { formatDateTime } from "./medical-records-helpers";
 import { MedicalRecordsSummaryCard } from "./medical-records-summary-card";
 
 type MedicalRecordsConsultationCardProps = {
@@ -37,14 +34,17 @@ type BlockSectionProps = {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-slate-500">
+    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
+      <div className="flex items-center gap-1.5 text-slate-500">
         {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
           {label}
         </span>
       </div>
-      <p className="mt-3 text-sm font-medium text-slate-900">{value}</p>
+
+      <p className="mt-2 text-sm font-medium leading-6 text-slate-900 break-words">
+        {value}
+      </p>
     </div>
   );
 }
@@ -56,7 +56,8 @@ function BlockSection({ title, children, icon }: BlockSectionProps) {
         {icon}
         <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
       </div>
-      <div className="mt-4">{children}</div>
+
+      <div className="mt-3">{children}</div>
     </section>
   );
 }
@@ -67,37 +68,39 @@ export function MedicalRecordsConsultationCard({
 }: MedicalRecordsConsultationCardProps) {
   return (
     <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0 xl:max-w-[440px]">
           <div className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4 text-cyan-700" />
-            <h3 className="text-lg font-semibold text-slate-950">
+            <h3 className="text-xl font-semibold tracking-tight text-slate-950">
               Atención #{consultationNumber}
             </h3>
           </div>
 
-          <p className="mt-2 text-sm text-slate-600">
-            Fecha de atención:{" "}
-            <span className="font-medium text-slate-800">
-              {formatDateTime(consultation.consultationDate)}
-            </span>
-          </p>
+          <div className="mt-4 space-y-1.5">
+            <p className="text-sm text-slate-600">
+              Fecha de atención:{" "}
+              <span className="font-medium text-slate-800">
+                {formatDateTime(consultation.consultationDate)}
+              </span>
+            </p>
 
-          <p className="mt-1 text-sm text-slate-600">
-            Veterinario:{" "}
-            <span className="font-medium text-slate-800">
-              {consultation.veterinarianName || "No informado"}
-            </span>
-          </p>
+            <p className="text-sm text-slate-600">
+              Veterinario:{" "}
+              <span className="font-medium text-slate-800">
+                {consultation.veterinarianName || "No informado"}
+              </span>
+            </p>
 
-          <p className="mt-1 text-xs text-slate-500">
-            Registrada: {formatDateTime(consultation.createdAt)}
-          </p>
+            <p className="text-xs text-slate-500">
+              Registrada: {formatDateTime(consultation.createdAt)}
+            </p>
+          </div>
         </div>
 
-        <div className="grid min-w-[240px] gap-3 md:grid-cols-3 lg:w-[360px]">
+        <div className="grid w-full gap-3 md:grid-cols-3 xl:max-w-[420px]">
           <MetricCard
-            icon={<Weight className="h-4 w-4" />}
+            icon={<Weight className="h-3.5 w-3.5" />}
             label="Peso"
             value={
               consultation.weightKg != null
@@ -106,7 +109,7 @@ export function MedicalRecordsConsultationCard({
             }
           />
           <MetricCard
-            icon={<Thermometer className="h-4 w-4" />}
+            icon={<Thermometer className="h-3.5 w-3.5" />}
             label="Temperatura"
             value={
               consultation.temperatureC != null
@@ -115,14 +118,14 @@ export function MedicalRecordsConsultationCard({
             }
           />
           <MetricCard
-            icon={<Activity className="h-4 w-4" />}
+            icon={<Activity className="h-3.5 w-3.5" />}
             label="Diagnóstico"
             value={consultation.diagnosis || "Sin diagnóstico"}
           />
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+      <div className="mt-5 grid gap-3 xl:grid-cols-2">
         <MedicalRecordsSummaryCard
           label="Motivo principal"
           value={consultation.chiefComplaint || "Sin información."}
@@ -149,24 +152,24 @@ export function MedicalRecordsConsultationCard({
         />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <MedicalRecordsSummaryCard
           label="Resumen de la atención"
           value={consultation.summary || "Sin resumen registrado."}
         />
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-4">
+      <div className="mt-5 grid gap-3 xl:grid-cols-2 2xl:grid-cols-4">
         <BlockSection
           title="Notas clínicas"
           icon={<FileText className="h-4 w-4 text-cyan-700" />}
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {consultation.consultationNotes.length ? (
               consultation.consultationNotes.map((note) => (
                 <div
                   key={note.id}
-                  className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-700"
+                  className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm leading-6 text-slate-700"
                 >
                   {note.note}
                 </div>
@@ -183,12 +186,12 @@ export function MedicalRecordsConsultationCard({
           title="Tratamientos"
           icon={<Syringe className="h-4 w-4 text-cyan-700" />}
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {consultation.treatments.length ? (
               consultation.treatments.map((treatment) => (
                 <div
                   key={treatment.id}
-                  className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-700"
+                  className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm leading-6 text-slate-700"
                 >
                   {treatment.description}
                 </div>
@@ -205,7 +208,7 @@ export function MedicalRecordsConsultationCard({
           title="Prescripciones"
           icon={<Pill className="h-4 w-4 text-cyan-700" />}
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {consultation.prescriptions.length ? (
               consultation.prescriptions.map((prescription) => (
                 <div
@@ -223,7 +226,7 @@ export function MedicalRecordsConsultationCard({
                     {prescription.duration || "Sin duración"}
                   </p>
                   {prescription.notes ? (
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
                       {prescription.notes}
                     </p>
                   ) : null}
@@ -241,7 +244,7 @@ export function MedicalRecordsConsultationCard({
           title="Adjuntos"
           icon={<Paperclip className="h-4 w-4 text-cyan-700" />}
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {consultation.attachments.length ? (
               consultation.attachments.map((attachment) => (
                 <div
