@@ -11,16 +11,24 @@ import {
   ShieldCheck,
   Clock3,
   Stethoscope,
+  CalendarIcon,
 } from "lucide-react";
 import { Controller, useWatch } from "react-hook-form";
-
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { useAppointmentGuestAvailability } from "@/hooks/appointment-guest/use-appointment-guest-availability";
 import { useAppointmentGuestCatalogs } from "@/hooks/appointment-guest/use-appointment-guest-catalogs";
 import { useAppointmentGuestForm } from "@/hooks/appointment-guest/use-appointment-guest-form";
-
+import { useAppointmentGuestTodayAvailability } from "@/hooks/appointment-guest/use-appointment-guest-today-availability";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const EMPTY_OPTION_VALUE = "";
 
@@ -38,6 +47,28 @@ function getTodayDateString() {
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function parseDateStringToLocalDate(value?: string) {
+  if (!value) return undefined;
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) return undefined;
+
+  return new Date(year, month - 1, day);
+}
+
+function formatDateToYmd(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function SectionHeader({
@@ -102,8 +133,8 @@ const selectContentClassName =
 const selectItemClassName =
   "cursor-pointer rounded-lg text-sm text-slate-700 outline-none focus:bg-cyan-50 focus:text-slate-900 data-[state=checked]:bg-cyan-50 data-[state=checked]:text-slate-900";
 
-function normalizeSelectValue(value: string) {
-  return value || EMPTY_OPTION_VALUE;
+function normalizeSelectValue(value?: string | null) {
+  return value ?? EMPTY_OPTION_VALUE;
 }
 
 function denormalizeSelectValue(value: string) {
@@ -146,12 +177,23 @@ export function AppointmentGuestForm() {
       appointmentDate: selectedAppointmentDate,
     });
 
+  const { hasTodayAvailability, isCheckingTodayAvailability } =
+    useAppointmentGuestTodayAvailability({
+      veterinarianId: selectedVeterinarianId,
+    });
+
+  const shouldBlockTodaySelection =
+    !!selectedVeterinarianId &&
+    !isCheckingTodayAvailability &&
+    !hasTodayAvailability;
+
   const shouldShowAppointmentTimeError =
     !!form.formState.errors.appointmentTime &&
     (!!form.formState.touchedFields.appointmentTime ||
       form.formState.submitCount > 0);
 
   const todayDate = getTodayDateString();
+  const todayDateObject = startOfDay(new Date());
 
   const hasAvailableTimes = availableTimes.length > 0;
   const canSelectAppointmentTime =
@@ -178,6 +220,40 @@ export function AppointmentGuestForm() {
     form.clearErrors("appointmentTime");
   }, [selectedVeterinarianId, selectedAppointmentDate, form]);
 
+  useEffect(() => {
+    if (!selectedVeterinarianId || !selectedAppointmentDate) {
+      return;
+    }
+
+    const isTodaySelected = selectedAppointmentDate === todayDate;
+
+    if (isTodaySelected && shouldBlockTodaySelection) {
+      form.setValue("appointmentDate", "", {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+
+      form.setValue("appointmentTime", "", {
+        shouldValidate: false,
+        shouldDirty: false,
+        shouldTouch: false,
+      });
+
+      form.setError("appointmentDate", {
+        type: "manual",
+        message:
+          "Hoy ya no hay horarios disponibles para el veterinario seleccionado. Debes elegir otra fecha.",
+      });
+    }
+  }, [
+    selectedVeterinarianId,
+    selectedAppointmentDate,
+    todayDate,
+    shouldBlockTodaySelection,
+    form,
+  ]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -200,524 +276,605 @@ export function AppointmentGuestForm() {
           horario disponible. Luego podrás confirmar la reserva y recibir la
           notificación por correo electrónico.
         </p>
-
-        <div className="mt-5 flex flex-wrap gap-2.5">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700">
-            <ShieldCheck className="h-4 w-4 text-cyan-700" />
-            Reserva pública segura
-          </div>
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700">
-            <Clock3 className="h-4 w-4 text-cyan-700" />
-            Confirmación por correo
-          </div>
-        </div>
       </div>
 
-      <div className="px-6 py-7 lg:px-7">
+      <form onSubmit={onSubmit} className="space-y-6 px-6 py-6 lg:px-7">
+        {submitSuccessMessage && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {submitSuccessMessage}
+          </div>
+        )}
+
+        {submitError && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {submitError}
+          </div>
+        )}
+
         {catalogsError && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-700">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {catalogsError}
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-6">
-          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
-            <SectionHeader
-              icon={UserRound}
-              title="Datos de contacto"
-              description="Información principal del tutor o persona que solicita la atención."
-            />
+        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
+          <SectionHeader
+            icon={UserRound}
+            title="Datos de contacto"
+            description="Información principal del tutor o persona que solicita la atención."
+          />
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <FieldLabel htmlFor="contactName" required>
-                  Nombre completo
-                </FieldLabel>
-                <Input
-                  id="contactName"
-                  placeholder="Ingresa tu nombre"
-                  className={inputClassName}
-                  {...form.register("contactName")}
-                />
-                <FieldError
-                  message={form.formState.errors.contactName?.message}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel htmlFor="contactEmail" required>
-                  Correo electrónico
-                </FieldLabel>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  placeholder="correo@ejemplo.com"
-                  className={inputClassName}
-                  {...form.register("contactEmail")}
-                />
-                <FieldError
-                  message={form.formState.errors.contactEmail?.message}
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <FieldLabel htmlFor="contactPhone">Teléfono</FieldLabel>
-                <Input
-                  id="contactPhone"
-                  placeholder="+56 9 ..."
-                  className={inputClassName}
-                  {...form.register("contactPhone")}
-                />
-                <FieldError
-                  message={form.formState.errors.contactPhone?.message}
-                />
-              </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <FieldLabel htmlFor="contactName" required>
+                Nombre completo
+              </FieldLabel>
+              <Input
+                id="contactName"
+                placeholder="Ingresa tu nombre"
+                className={inputClassName}
+                {...form.register("contactName")}
+              />
+              <FieldError message={form.formState.errors.contactName?.message} />
             </div>
-          </section>
 
-          <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-            <SectionHeader
-              icon={Dog}
-              title="Datos de la mascota"
-              description="Completa la información básica del paciente que será atendido."
-            />
+            <div className="space-y-2">
+              <FieldLabel htmlFor="contactEmail" required>
+                Correo electrónico
+              </FieldLabel>
+              <Input
+                id="contactEmail"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                className={inputClassName}
+                {...form.register("contactEmail")}
+              />
+              <FieldError
+                message={form.formState.errors.contactEmail?.message}
+              />
+            </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <FieldLabel htmlFor="petName" required>
-                  Nombre de la mascota
-                </FieldLabel>
-                <Input
-                  id="petName"
-                  placeholder="Ej: Luna"
-                  className={inputClassName}
-                  {...form.register("petName")}
-                />
-                <FieldError message={form.formState.errors.petName?.message} />
-              </div>
+            <div className="space-y-2 md:col-span-2">
+              <FieldLabel htmlFor="contactPhone">Teléfono</FieldLabel>
+              <Input
+                id="contactPhone"
+                placeholder="+56 9 ..."
+                className={inputClassName}
+                {...form.register("contactPhone")}
+              />
+              <FieldError
+                message={form.formState.errors.contactPhone?.message}
+              />
+            </div>
+          </div>
+        </section>
 
-              <div className="space-y-2">
-                <FieldLabel required>Especie</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="petSpecies"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                      disabled={isLoadingCatalogs}
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContentClassName}>
+        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+          <SectionHeader
+            icon={Dog}
+            title="Datos de la mascota"
+            description="Completa la información básica del paciente que será atendido."
+          />
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <FieldLabel htmlFor="petName" required>
+                Nombre de la mascota
+              </FieldLabel>
+              <Input
+                id="petName"
+                placeholder="Ej: Luna"
+                className={inputClassName}
+                {...form.register("petName")}
+              />
+              <FieldError message={form.formState.errors.petName?.message} />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel required>Especie</FieldLabel>
+              <Controller
+                control={form.control}
+                name="petSpecies"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                    disabled={isLoadingCatalogs}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value={EMPTY_OPTION_VALUE}
+                      >
+                        Seleccionar
+                      </SelectItem>
+                      {speciesOptions.map((species) => (
                         <SelectItem
                           className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
+                          key={species.id}
+                          value={species.id}
                         >
-                          Seleccionar
+                          {species.name}
                         </SelectItem>
-                        {speciesOptions.map((species) => (
-                          <SelectItem
-                            className={selectItemClassName}
-                            key={species.id}
-                            value={species.id}
-                          >
-                            {species.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError
-                  message={form.formState.errors.petSpecies?.message}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel>Raza</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="petBreed"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value ?? "")}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                      disabled={!selectedSpeciesId || isLoadingBreeds}
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue
-                          placeholder={
-                            !selectedSpeciesId
-                              ? "Selecciona primero una especie"
-                              : isLoadingBreeds
-                                ? "Cargando razas..."
-                                : "Seleccionar"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent className={selectContentClassName}>
-                        <SelectItem
-                          className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
-                        >
-                          Seleccionar
-                        </SelectItem>
-                        {breedOptions.map((breed) => (
-                          <SelectItem
-                            className={selectItemClassName}
-                            key={breed.id}
-                            value={breed.name}
-                          >
-                            {breed.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError message={form.formState.errors.petBreed?.message} />
-                {breedsError && (
-                  <p className="text-sm text-amber-600">{breedsError}</p>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
-              </div>
+              />
+              <FieldError
+                message={form.formState.errors.petSpecies?.message}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <FieldLabel>Sexo</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="petSex"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value ?? "")}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContentClassName}>
+            <div className="space-y-2">
+              <FieldLabel>Raza</FieldLabel>
+              <Controller
+                control={form.control}
+                name="petBreed"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                    disabled={!selectedSpeciesId || isLoadingBreeds}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue
+                        placeholder={
+                          !selectedSpeciesId
+                            ? "Selecciona especie"
+                            : isLoadingBreeds
+                              ? "Cargando razas..."
+                              : "Seleccionar raza"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value={EMPTY_OPTION_VALUE}
+                      >
+                        Seleccionar raza
+                      </SelectItem>
+                      {breedOptions.map((breed) => (
                         <SelectItem
                           className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
+                          key={breed.id}
+                          value={breed.id}
                         >
-                          Seleccionar
+                          {breed.name}
                         </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={breedsError || form.formState.errors.petBreed?.message} />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Sexo</FieldLabel>
+              <Controller
+                control={form.control}
+                name="petSex"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar sexo" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value={EMPTY_OPTION_VALUE}
+                      >
+                        Seleccionar sexo
+                      </SelectItem>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value="Macho"
+                      >
+                        Macho
+                      </SelectItem>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value="Hembra"
+                      >
+                        Hembra
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel htmlFor="petAge">Edad aproximada</FieldLabel>
+              <Input
+                id="petAge"
+                placeholder="Ej: 2 años"
+                className={inputClassName}
+                {...form.register("petAge")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel htmlFor="petWeightKg">Peso aproximado</FieldLabel>
+              <Input
+                id="petWeightKg"
+                placeholder="Ej: 12 kg"
+                className={inputClassName}
+                {...form.register("petWeightKg")}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
+          <SectionHeader
+            icon={CalendarDays}
+            title="Atención y horario"
+            description="Selecciona el tipo de atención, profesional, fecha y bloque disponible."
+          />
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <FieldLabel required>Tipo de atención</FieldLabel>
+              <Controller
+                control={form.control}
+                name="appointmentTypeId"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                    disabled={isLoadingCatalogs}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value={EMPTY_OPTION_VALUE}
+                      >
+                        Seleccionar
+                      </SelectItem>
+                      {appointmentTypes.map((appointmentType) => (
                         <SelectItem
                           className={selectItemClassName}
-                          value="Macho"
+                          key={appointmentType.id}
+                          value={appointmentType.id}
                         >
-                          Macho
+                          {appointmentType.name}
                         </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError
+                message={form.formState.errors.appointmentTypeId?.message}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel required>Veterinario</FieldLabel>
+              <Controller
+                control={form.control}
+                name="veterinarianId"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                    disabled={isLoadingCatalogs}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        className={selectItemClassName}
+                        value={EMPTY_OPTION_VALUE}
+                      >
+                        Seleccionar
+                      </SelectItem>
+                      {veterinarians.map((veterinarian) => (
                         <SelectItem
                           className={selectItemClassName}
-                          value="Hembra"
+                          key={veterinarian.id}
+                          value={veterinarian.id}
                         >
-                          Hembra
+                          {veterinarian.fullName}
                         </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError
+                message={form.formState.errors.veterinarianId?.message}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <FieldLabel htmlFor="petAge">Edad aproximada</FieldLabel>
-                <Input
-                  id="petAge"
-                  placeholder="Ej: 2 años"
-                  className={inputClassName}
-                  {...form.register("petAge")}
-                />
-              </div>
+            <div className="space-y-2">
+              <FieldLabel htmlFor="appointmentDate" required>
+                Fecha
+              </FieldLabel>
 
-              <div className="space-y-2">
-                <FieldLabel htmlFor="petWeightKg">Peso aproximado</FieldLabel>
-                <Input
-                  id="petWeightKg"
-                  placeholder="Ej: 12 kg"
-                  className={inputClassName}
-                  {...form.register("petWeightKg")}
+              <Controller
+                control={form.control}
+                name="appointmentDate"
+                render={({ field }) => {
+                  const selectedDate = parseDateStringToLocalDate(field.value);
+
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "h-10 w-full justify-between rounded-xl border-slate-200 bg-white px-4 text-left text-sm font-normal text-slate-700 shadow-sm hover:bg-white",
+                            !field.value && "text-slate-400",
+                          )}
+                        >
+                          {selectedDate ? (
+                            format(selectedDate, "dd-MM-yyyy", { locale: es })
+                          ) : (
+                            <span>Seleccionar fecha</span>
+                          )}
+
+                          <CalendarIcon className="h-4 w-4 shrink-0 text-slate-500" />
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent
+                        className="w-auto rounded-xl border border-slate-200 bg-white p-0 shadow-xl"
+                        align="start"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          locale={es}
+                          onSelect={(date) => {
+                            if (!date) {
+                              field.onChange("");
+                              return;
+                            }
+
+                            const normalizedDate = startOfDay(date);
+                            const nextValue = formatDateToYmd(normalizedDate);
+                            const isTodaySelected = nextValue === todayDate;
+
+                            if (isTodaySelected && shouldBlockTodaySelection) {
+                              form.setError("appointmentDate", {
+                                type: "manual",
+                                message:
+                                  "Hoy ya no hay horarios disponibles para el veterinario seleccionado. Debes elegir otra fecha.",
+                              });
+
+                              field.onChange("");
+                              return;
+                            }
+
+                            form.clearErrors("appointmentDate");
+                            field.onChange(nextValue);
+                          }}
+                          disabled={(date) => {
+                            const normalizedDate = startOfDay(date);
+
+                            if (normalizedDate < todayDateObject) {
+                              return true;
+                            }
+
+                            if (
+                              shouldBlockTodaySelection &&
+                              normalizedDate.getTime() ===
+                                todayDateObject.getTime()
+                            ) {
+                              return true;
+                            }
+
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }}
+              />
+
+              <FieldError
+                message={form.formState.errors.appointmentDate?.message}
+              />
+
+              {!!selectedVeterinarianId &&
+                !isCheckingTodayAvailability &&
+                !hasTodayAvailability && (
+                  <p className="text-sm text-amber-600">
+                    Hoy ya no quedan horarios disponibles para el veterinario
+                    seleccionado.
+                  </p>
+                )}
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel required>Horario disponible</FieldLabel>
+              <Controller
+                control={form.control}
+                name="appointmentTime"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) => {
+                      field.onChange(denormalizeSelectValue(value));
+                    }}
+                    disabled={!canSelectAppointmentTime}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue
+                        placeholder={
+                          !selectedVeterinarianId || !selectedAppointmentDate
+                            ? "Selecciona veterinario y fecha"
+                            : isLoadingTimes
+                              ? "Cargando horarios..."
+                              : hasAvailableTimes
+                                ? "Seleccionar una opción"
+                                : "No hay horarios disponibles"
+                        }
+                      />
+                    </SelectTrigger>
+
+                    <SelectContent className={selectContentClassName}>
+                      {availableTimes.map((timeOption) => (
+                        <SelectItem
+                          key={timeOption.value}
+                          value={timeOption.value}
+                          className={selectItemClassName}
+                        >
+                          {timeOption.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+
+              {timesError && <FieldError message={timesError} />}
+
+              {!timesError &&
+                selectedVeterinarianId &&
+                selectedAppointmentDate &&
+                !isLoadingTimes &&
+                !hasAvailableTimes && (
+                  <p className="text-sm text-amber-600">
+                    No existen horarios disponibles para el veterinario y la
+                    fecha seleccionados.
+                  </p>
+                )}
+
+              {shouldShowAppointmentTimeError && (
+                <FieldError
+                  message={form.formState.errors.appointmentTime?.message}
                 />
+              )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <FieldLabel htmlFor="reason">Motivo de la consulta</FieldLabel>
+              <Textarea
+                id="reason"
+                placeholder="Describe brevemente el motivo de la atención"
+                className={textareaClassName}
+                rows={4}
+                {...form.register("reason")}
+              />
+              <FieldError message={form.formState.errors.reason?.message} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <FieldLabel htmlFor="observations">Observaciones</FieldLabel>
+              <Textarea
+                id="observations"
+                placeholder="Información adicional opcional"
+                className={textareaClassName}
+                rows={4}
+                {...form.register("observations")}
+              />
+              <FieldError
+                message={form.formState.errors.observations?.message}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+          <SectionHeader
+            icon={ShieldCheck}
+            title="Confirmación por correo electrónico"
+            description="Recibirás el detalle de tu reserva una vez que el registro se complete correctamente."
+          />
+
+          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <Mail className="mt-0.5 h-4 w-4 text-slate-500" />
+              <div>
+                <p className="font-medium text-slate-700">
+                  Confirmación de reserva
+                </p>
+                <p className="mt-1 leading-6">
+                  Te enviaremos el detalle de la cita a tu correo electrónico.
+                </p>
               </div>
             </div>
-          </section>
 
-          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
-            <SectionHeader
-              icon={CalendarDays}
-              title="Atención y horario"
-              description="Selecciona el tipo de atención, profesional, fecha y bloque disponible."
-            />
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <FieldLabel required>Tipo de atención</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="appointmentTypeId"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                      disabled={isLoadingCatalogs}
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContentClassName}>
-                        <SelectItem
-                          className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
-                        >
-                          Seleccionar
-                        </SelectItem>
-                        {appointmentTypes.map((appointmentType) => (
-                          <SelectItem
-                            className={selectItemClassName}
-                            key={appointmentType.id}
-                            value={appointmentType.id}
-                          >
-                            {appointmentType.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError
-                  message={form.formState.errors.appointmentTypeId?.message}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel required>Veterinario</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="veterinarianId"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(denormalizeSelectValue(value))
-                      }
-                      disabled={isLoadingCatalogs}
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContentClassName}>
-                        <SelectItem
-                          className={selectItemClassName}
-                          value={EMPTY_OPTION_VALUE}
-                        >
-                          Seleccionar
-                        </SelectItem>
-                        {veterinarians.map((veterinarian) => (
-                          <SelectItem
-                            className={selectItemClassName}
-                            key={veterinarian.id}
-                            value={veterinarian.id}
-                          >
-                            {veterinarian.fullName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError
-                  message={form.formState.errors.veterinarianId?.message}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel htmlFor="appointmentDate" required>
-                  Fecha
-                </FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="appointmentDate"
-                  render={({ field }) => (
-                    <Input
-                      id="appointmentDate"
-                      type="date"
-                      min={todayDate}
-                      className={inputClassName}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  )}
-                />
-                <FieldError
-                  message={form.formState.errors.appointmentDate?.message}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel required>Horario disponible</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name="appointmentTime"
-                  render={({ field }) => (
-                    <Select
-                      value={normalizeSelectValue(field.value)}
-                      onValueChange={(value) => {
-                        field.onChange(denormalizeSelectValue(value));
-                      }}
-                      disabled={!canSelectAppointmentTime}
-                    >
-                      <SelectTrigger className={selectTriggerClassName}>
-                        <SelectValue
-                          placeholder={
-                            !selectedVeterinarianId || !selectedAppointmentDate
-                              ? "Selecciona veterinario y fecha"
-                              : isLoadingTimes
-                                ? "Cargando horarios..."
-                                : hasAvailableTimes
-                                  ? "Seleccionar una opción"
-                                  : "No hay horarios disponibles"
-                          }
-                        />
-                      </SelectTrigger>
-
-                      <SelectContent className={selectContentClassName}>
-                        {availableTimes.map((timeOption) => (
-                          <SelectItem
-                            key={timeOption.value}
-                            value={timeOption.value}
-                            className={selectItemClassName}
-                          >
-                            {timeOption.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-
-                {timesError && <FieldError message={timesError} />}
-
-                {!timesError &&
-                  selectedVeterinarianId &&
-                  selectedAppointmentDate &&
+            <Button
+              type="submit"
+              size="lg"
+              disabled={
+                isSubmitting ||
+                (Boolean(selectedVeterinarianId) &&
+                  Boolean(selectedAppointmentDate) &&
                   !isLoadingTimes &&
-                  !hasAvailableTimes && (
-                    <p className="text-sm text-amber-600">
-                      No existen horarios disponibles para el veterinario y la
-                      fecha seleccionados.
-                    </p>
-                  )}
+                  !hasAvailableTimes)
+              }
+              className="h-11 rounded-full bg-slate-950 px-7 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
+            >
+              {isSubmitting ? "Registrando..." : "Confirmar reserva"}
+            </Button>
+          </div>
+        </section>
 
-                {shouldShowAppointmentTimeError && (
-                  <FieldError
-                    message={form.formState.errors.appointmentTime?.message}
-                  />
-                )}
-                <FieldError
-                  message={
-                    shouldShowAppointmentTimeError
-                      ? form.formState.errors.appointmentTime?.message
-                      : undefined
-                  }
-                />
-                {timesError && (
-                  <p className="text-sm text-amber-600">{timesError}</p>
-                )}
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <FieldLabel htmlFor="reason">Motivo de la consulta</FieldLabel>
-                <Textarea
-                  id="reason"
-                  placeholder="Describe brevemente el motivo de la consulta"
-                  className={`min-h-[128px] ${textareaClassName}`}
-                  {...form.register("reason")}
-                />
-                <FieldError message={form.formState.errors.reason?.message} />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <FieldLabel htmlFor="observations">Observaciones</FieldLabel>
-                <Textarea
-                  id="observations"
-                  placeholder="Información adicional opcional"
-                  className={`min-h-[104px] ${textareaClassName}`}
-                  {...form.register("observations")}
-                />
-              </div>
+        <section className="grid gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <Clock3 className="h-4 w-4 text-cyan-700" />
+              Tiempo estimado
             </div>
-          </section>
-
-          {submitError && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
-              {submitError}
-            </div>
-          )}
-
-          {submitSuccessMessage && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
-              {submitSuccessMessage}
-            </div>
-          )}
-
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-3 text-sm text-slate-600">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-slate-800">
-                    Confirmación por correo electrónico
-                  </p>
-                  <p className="mt-1 leading-6">
-                    Recibirás el detalle de tu reserva una vez que el registro
-                    se complete correctamente.
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={
-                  isSubmitting ||
-                  (Boolean(selectedVeterinarianId) &&
-                    Boolean(selectedAppointmentDate) &&
-                    !isLoadingTimes &&
-                    !hasAvailableTimes)
-                }
-                className="h-11 rounded-full bg-slate-950 px-7 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
-              >
-                {isSubmitting ? "Registrando..." : "Confirmar reserva"}
-              </Button>
-            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Las reservas se asignan según disponibilidad vigente del
+              veterinario y pueden variar por jornada.
+            </p>
           </div>
 
-          <div className="rounded-[1.25rem] border border-cyan-100 bg-cyan-50/70 px-4 py-3.5 text-sm text-slate-600">
-            <div className="flex items-start gap-3">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
-              <p className="leading-6">
-                La disponibilidad depende del profesional seleccionado, la fecha
-                y los bloques actualmente disponibles en el sistema.
-              </p>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <Info className="h-4 w-4 text-cyan-700" />
+              Información importante
             </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Verifica tus datos antes de confirmar para asegurar el envío del
+              correo de reserva y una correcta atención.
+            </p>
           </div>
-        </form>
-      </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <ShieldCheck className="h-4 w-4 text-cyan-700" />
+              Disponibilidad real
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Los horarios mostrados se calculan según la disponibilidad activa
+              del veterinario y las reservas ya registradas.
+            </p>
+          </div>
+        </section>
+      </form>
     </motion.div>
   );
 }
