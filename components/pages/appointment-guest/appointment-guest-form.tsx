@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 const EMPTY_OPTION_VALUE = "__empty__";
 
@@ -289,7 +290,6 @@ export function AppointmentGuestForm() {
             {catalogsError}
           </div>
         )}
-
         <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
           <SectionHeader
             icon={CalendarDays}
@@ -299,33 +299,14 @@ export function AppointmentGuestForm() {
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <FieldLabel>Mascota</FieldLabel>
-              <Controller
-                control={form.control}
-                name="petName"
-                render={({ field }) => (
-                  <Select
-                    value={normalizeSelectValue(field.value)}
-                    onValueChange={(value) =>
-                      field.onChange(denormalizeSelectValue(value))
-                    }
-                  >
-                    <SelectTrigger className={selectTriggerClassName}>
-                      <SelectValue placeholder="Seleccionar una opción" />
-                    </SelectTrigger>
-                    <SelectContent className={selectContentClassName}>
-                      <SelectItem
-                        value={EMPTY_OPTION_VALUE}
-                        className={selectItemClassName}
-                      >
-                        Seleccionar una opción
-                      </SelectItem>
-
-                      {selectedPetName ? null : null}
-                    </SelectContent>
-                  </Select>
-                )}
+              <FieldLabel htmlFor="petName">Mascota</FieldLabel>
+              <Input
+                id="petName"
+                placeholder="Ingresa el nombre de la mascota"
+                className="h-10 w-full rounded-xl border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200"
+                {...form.register("petName")}
               />
+              <FieldError message={form.formState.errors.petName?.message} />
             </div>
 
             <div className="space-y-2">
@@ -508,7 +489,8 @@ export function AppointmentGuestForm() {
                 message={form.formState.errors.appointmentDate?.message}
               />
 
-              {!!selectedVeterinarianId &&
+              {selectedAppointmentDate === todayDate &&
+                !!selectedVeterinarianId &&
                 !isCheckingTodayAvailability &&
                 !hasTodayAvailability && (
                   <p className="text-sm text-amber-600">
@@ -607,19 +589,16 @@ export function AppointmentGuestForm() {
             </div>
           </div>
         </section>
-
         {submitError && (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-600">
             {submitError}
           </div>
         )}
-
         {submitSuccessMessage && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
             {submitSuccessMessage}
           </div>
         )}
-
         <div className="rounded-[1.5rem] border border-slate-200 bg-white px-5 py-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3 text-sm text-slate-600">
@@ -653,7 +632,6 @@ export function AppointmentGuestForm() {
             </Button>
           </div>
         </div>
-
         <div className="rounded-[1.25rem] border border-cyan-100 bg-cyan-50/70 px-4 py-3.5 text-sm text-slate-600">
           <div className="flex items-start gap-3">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
@@ -663,6 +641,7 @@ export function AppointmentGuestForm() {
             </p>
           </div>
         </div>
+        Mascota
       </form>
     </motion.div>
   );
