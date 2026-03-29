@@ -131,6 +131,9 @@ function FieldError({ message }: { message?: string }) {
 const textareaClassName =
   "w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-200";
 
+const inputClassName =
+  "h-10 w-full rounded-xl border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200";
+
 const selectTriggerClassName =
   "!h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus:ring-2 focus:ring-cyan-200 focus:ring-offset-0";
 
@@ -290,6 +293,59 @@ export function AppointmentGuestForm() {
             {catalogsError}
           </div>
         )}
+        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-5">
+          <SectionHeader
+            icon={UserRound}
+            title="Datos de contacto"
+            description="Información principal del tutor o persona que solicita la atención."
+          />
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <FieldLabel htmlFor="contactName" required>
+                Nombre completo
+              </FieldLabel>
+              <Input
+                id="contactName"
+                placeholder="Ingresa tu nombre completo"
+                className={inputClassName}
+                {...form.register("contactName")}
+              />
+              <FieldError
+                message={form.formState.errors.contactName?.message}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel htmlFor="contactEmail" required>
+                Correo electrónico
+              </FieldLabel>
+              <Input
+                id="contactEmail"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                className={inputClassName}
+                {...form.register("contactEmail")}
+              />
+              <FieldError
+                message={form.formState.errors.contactEmail?.message}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <FieldLabel htmlFor="contactPhone">Teléfono</FieldLabel>
+              <Input
+                id="contactPhone"
+                placeholder="+56 9 ..."
+                className={inputClassName}
+                {...form.register("contactPhone")}
+              />
+              <FieldError
+                message={form.formState.errors.contactPhone?.message}
+              />
+            </div>
+          </div>
+        </section>
         <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
           <SectionHeader
             icon={CalendarDays}
@@ -298,15 +354,57 @@ export function AppointmentGuestForm() {
           />
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <FieldLabel htmlFor="petName">Mascota</FieldLabel>
+            <div className="space-y-2">
+              <FieldLabel htmlFor="petName" required>
+                Mascota
+              </FieldLabel>
               <Input
                 id="petName"
                 placeholder="Ingresa el nombre de la mascota"
-                className="h-10 w-full rounded-xl border-slate-200 bg-white px-4 text-sm text-slate-700 shadow-sm transition focus-visible:ring-2 focus-visible:ring-cyan-200"
+                className={inputClassName}
                 {...form.register("petName")}
               />
               <FieldError message={form.formState.errors.petName?.message} />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel required>Especie</FieldLabel>
+              <Controller
+                control={form.control}
+                name="petSpecies"
+                render={({ field }) => (
+                  <Select
+                    value={normalizeSelectValue(field.value)}
+                    onValueChange={(value) =>
+                      field.onChange(denormalizeSelectValue(value))
+                    }
+                    disabled={isLoadingCatalogs}
+                  >
+                    <SelectTrigger className={selectTriggerClassName}>
+                      <SelectValue placeholder="Seleccionar una opción" />
+                    </SelectTrigger>
+                    <SelectContent className={selectContentClassName}>
+                      <SelectItem
+                        value={EMPTY_OPTION_VALUE}
+                        className={selectItemClassName}
+                      >
+                        Seleccionar una opción
+                      </SelectItem>
+
+                      {speciesOptions.map((species) => (
+                        <SelectItem
+                          key={species.id}
+                          value={species.id}
+                          className={selectItemClassName}
+                        >
+                          {species.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={form.formState.errors.petSpecies?.message} />
             </div>
 
             <div className="space-y-2">
