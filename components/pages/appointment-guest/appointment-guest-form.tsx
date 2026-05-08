@@ -739,7 +739,6 @@ export function AppointmentGuestForm() {
             </p>
           </div>
         </div>
-        Mascota
       </form>
     </motion.div>
   );

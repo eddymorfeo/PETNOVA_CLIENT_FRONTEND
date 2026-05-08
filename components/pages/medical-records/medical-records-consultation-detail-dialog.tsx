@@ -33,8 +33,8 @@ export function MedicalRecordsConsultationDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[min(96vw,1320px)] !max-w-[1320px] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 p-0 shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-        <div className="flex max-h-[100vh] flex-col overflow-hidden rounded-[1.5rem]">
+      <DialogContent className="w-[min(96vw,1320px)]! max-w-330! overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+        <div className="flex max-h-screen flex-col overflow-hidden rounded-3xl">
           <DialogHeader className="border-b border-slate-200 bg-white px-8 py-5 text-left">
             <div className="pr-12">
               <DialogTitle className="text-left text-[1.45rem] font-semibold tracking-tight text-slate-950">
