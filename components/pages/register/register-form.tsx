@@ -11,8 +11,8 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ type RegisterResponse = {
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,6 +51,19 @@ export function RegisterForm() {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const emailFromUrl = searchParams.get("email");
+    const fullNameFromUrl = searchParams.get("fullName");
+
+    if (emailFromUrl) {
+      setEmail(emailFromUrl);
+    }
+
+    if (fullNameFromUrl) {
+      setFullName(fullNameFromUrl);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

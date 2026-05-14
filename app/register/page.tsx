@@ -1,7 +1,11 @@
+import { Suspense } from "react";
+
 import { RegisterPage } from "@/components/pages/register/register-page";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function Register() {
-  return <RegisterPage />;
+  return (
+    <Suspense fallback={null}>
+      <RegisterPage />
+    </Suspense>
+  );
 }
