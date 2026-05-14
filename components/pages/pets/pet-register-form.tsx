@@ -11,6 +11,7 @@ import {
 } from "@/api/pets/pets.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 import type {
   BreedOption,
   PetSex,
@@ -99,18 +100,27 @@ export function PetRegisterForm() {
     try {
       setIsSaving(true);
 
-      await createPet({
-        name: name.trim(),
-        speciesId,
-        breedId,
-        sex,
-        birthDate,
-        color: color.trim() || null,
-        microchip: microchip.trim() || null,
-        isSterilized,
-        allergies: allergies.trim() || null,
-        notes: notes.trim() || null,
-      });
+      await withProcessToast(
+        () =>
+          createPet({
+            name: name.trim(),
+            speciesId,
+            breedId,
+            sex,
+            birthDate,
+            color: color.trim() || null,
+            microchip: microchip.trim() || null,
+            isSterilized,
+            allergies: allergies.trim() || null,
+            notes: notes.trim() || null,
+          }),
+        {
+          loading: "Registrando mascota...",
+          success: "Mascota registrada correctamente",
+          successDescription: "La ficha quedó disponible en tu portal.",
+          error: "No fue posible registrar la mascota",
+        },
+      );
 
       setSubmitSuccess("Mascota registrada correctamente.");
 

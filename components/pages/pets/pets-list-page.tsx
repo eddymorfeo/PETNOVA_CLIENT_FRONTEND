@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 
 import { fetchMyPets, deletePet } from "@/api/pets/pets.api";
 import { Button } from "@/components/ui/button";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 import type { PetItem } from "@/types/pets/pet.types";
 import { PetEmptyState } from "./pet-empty-state";
 import { createPetColumns } from "./data-table/columns";
@@ -74,44 +75,18 @@ export function PetsListPage() {
       try {
         setDeletingPetId(petId);
 
-        await deletePet(petId);
+        await withProcessToast(() => deletePet(petId), {
+          loading: "Eliminando mascota...",
+          success: "Mascota eliminada correctamente",
+          successDescription: `${petName} fue desactivada en el portal.`,
+          error: "No fue posible eliminar la mascota",
+        });
 
         setPets((currentPets) => currentPets.filter((pet) => pet.id !== petId));
 
-        await Swal.fire({
-          title: "Mascota eliminada",
-          text: `${petName} fue desactivada correctamente.`,
-          icon: "success",
-          timer: 1800,
-          showConfirmButton: false,
-          customClass: {
-            popup: "rounded-[1.5rem]",
-            title: "text-slate-950 text-xl font-semibold",
-            htmlContainer: "text-slate-600 text-sm",
-          },
-        });
-
         router.refresh();
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "No fue posible eliminar la mascota.";
-
-        await Swal.fire({
-          title: "No se pudo eliminar",
-          text: errorMessage,
-          icon: "error",
-          confirmButtonText: "Entendido",
-          buttonsStyling: false,
-          customClass: {
-            popup: "rounded-[1.5rem]",
-            title: "text-slate-950 text-xl font-semibold",
-            htmlContainer: "text-slate-600 text-sm",
-            confirmButton:
-              "inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-medium text-white hover:bg-slate-800",
-          },
-        });
+      } catch {
+        // El toast de error se muestra en withProcessToast.
       } finally {
         setDeletingPetId(null);
       }

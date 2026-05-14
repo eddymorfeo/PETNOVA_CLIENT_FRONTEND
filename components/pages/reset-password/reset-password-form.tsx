@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 const RESET_PASSWORD_TOKEN_STORAGE_KEY = "petnova-reset-password-token";
 
@@ -97,27 +98,39 @@ export function ResetPasswordForm() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/reset-password`,
+      await withProcessToast(
+        async () => {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/reset-password`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                token,
+                password,
+              }),
+            },
+          );
+
+          const result: ResetPasswordResponse = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message || "No fue posible restablecer la contraseña.",
+            );
+          }
+
+          return result;
+        },
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            password,
-          }),
-        }
+          loading: "Actualizando contraseña...",
+          success: "Contraseña actualizada correctamente",
+          successDescription: "Serás redirigido al inicio de sesión.",
+          error: "No fue posible restablecer la contraseña",
+        },
       );
-
-      const result: ResetPasswordResponse = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message || "No fue posible restablecer la contraseña."
-        );
-      }
 
       if (typeof window !== "undefined") {
         sessionStorage.removeItem(RESET_PASSWORD_TOKEN_STORAGE_KEY);

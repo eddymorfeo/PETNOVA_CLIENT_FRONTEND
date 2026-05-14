@@ -10,7 +10,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 
 import { fetchMyPets } from "@/api/pets/pets.api";
 import type { PetItem } from "@/types/pets/pet.types";
@@ -21,6 +20,7 @@ import {
 } from "@/api/appointments/appointments.api";
 import { useAppointmentGuestAvailability } from "@/hooks/appointment-guest/use-appointment-guest-availability";
 import { useAppointmentGuestCatalogs } from "@/hooks/appointment-guest/use-appointment-guest-catalogs";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,18 +172,21 @@ export function AppointmentBookingForm({
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await createAuthenticatedAppointment(values);
+      await withProcessToast(
+        () => createAuthenticatedAppointment(values),
+        {
+          loading: "Registrando cita...",
+          success: "Cita registrada correctamente",
+          successDescription: "La reserva quedó asociada a tu cuenta.",
+          error: "No fue posible registrar la cita",
+        },
+      );
 
-      toast.success("Cita registrada correctamente.");
       form.reset();
 
       await onCreated?.();
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No fue posible registrar la cita.",
-      );
+    } catch {
+      // El toast de error se muestra en withProcessToast.
     }
   });
 

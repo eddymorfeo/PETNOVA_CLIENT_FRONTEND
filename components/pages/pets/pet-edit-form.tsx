@@ -12,6 +12,7 @@ import {
 } from "@/api/pets/pets.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 import type {
   BreedOption,
   PetSex,
@@ -151,18 +152,27 @@ export function PetEditForm({ petId }: { petId: string }) {
     try {
       setIsSaving(true);
 
-      await updatePet(petId, {
-        name: name.trim(),
-        speciesId,
-        breedId,
-        sex,
-        birthDate,
-        color: color.trim() || null,
-        microchip: microchip.trim() || null,
-        isSterilized,
-        allergies: allergies.trim() || null,
-        notes: notes.trim() || null,
-      });
+      await withProcessToast(
+        () =>
+          updatePet(petId, {
+            name: name.trim(),
+            speciesId,
+            breedId,
+            sex,
+            birthDate,
+            color: color.trim() || null,
+            microchip: microchip.trim() || null,
+            isSterilized,
+            allergies: allergies.trim() || null,
+            notes: notes.trim() || null,
+          }),
+        {
+          loading: "Actualizando mascota...",
+          success: "Mascota actualizada correctamente",
+          successDescription: "Los cambios quedaron guardados.",
+          error: "No fue posible actualizar la mascota",
+        },
+      );
 
       setSubmitSuccess("Mascota actualizada correctamente.");
 

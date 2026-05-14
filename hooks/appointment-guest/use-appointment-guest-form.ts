@@ -9,6 +9,7 @@ import {
   appointmentGuestSchema,
   type AppointmentGuestSchemaData,
 } from "@/schemas/appointment-guest/appointment-guest.schema";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 const defaultValues: AppointmentGuestSchemaData = {
   contactName: "",
@@ -46,7 +47,15 @@ export function useAppointmentGuestForm() {
 
     try {
       const payload = mapAppointmentGuestFormToRequest(formData);
-      const response = await createGuestAppointment(payload);
+      const response = await withProcessToast(
+        () => createGuestAppointment(payload),
+        {
+          loading: "Registrando reserva...",
+          success: "Reserva registrada correctamente",
+          successDescription: "Te contactaremos con la confirmación.",
+          error: "No fue posible registrar la reserva",
+        },
+      );
 
       setSubmitSuccessMessage(
         response.message || "Reserva registrada correctamente."

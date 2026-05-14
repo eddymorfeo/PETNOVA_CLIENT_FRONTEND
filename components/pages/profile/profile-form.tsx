@@ -18,6 +18,7 @@ import {
   getClientAuthHeaders,
   updateClientSessionUser,
 } from "@/lib/auth/client-session";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 type AuthMeResponse = {
   success: boolean;
@@ -122,43 +123,55 @@ export function ClientProfileForm() {
     try {
       setIsSaving(true);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/clients/${clientId}`,
+      await withProcessToast(
+        async () => {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/clients/${clientId}`,
+            {
+              method: "PATCH",
+              headers: getClientAuthHeaders(),
+              body: JSON.stringify({
+                fullName: fullName.trim(),
+                phone: phone.trim() || null,
+                documentId: documentId.trim() || null,
+                address: address.trim() || null,
+              }),
+            },
+          );
+
+          const result: UpdateClientResponse = await response.json();
+
+          if (!response.ok || !result.success || !result.data) {
+            throw new Error(
+              result.message || "No fue posible actualizar tus datos.",
+            );
+          }
+
+          updateClientSessionUser({
+            id: result.data.id,
+            email: result.data.email,
+            fullName: result.data.full_name,
+            phone: result.data.phone ?? null,
+            documentId: result.data.document_id ?? null,
+            address: result.data.address ?? null,
+            isActive: result.data.is_active,
+          });
+
+          setFullName(result.data.full_name ?? "");
+          setPhone(result.data.phone ?? "");
+          setDocumentId(result.data.document_id ?? "");
+          setAddress(result.data.address ?? "");
+          setIsActive(result.data.is_active);
+
+          return result;
+        },
         {
-          method: "PATCH",
-          headers: getClientAuthHeaders(),
-          body: JSON.stringify({
-            fullName: fullName.trim(),
-            phone: phone.trim() || null,
-            documentId: documentId.trim() || null,
-            address: address.trim() || null,
-          }),
-        }
+          loading: "Actualizando perfil...",
+          success: "Perfil actualizado correctamente",
+          successDescription: "Tus datos personales fueron guardados.",
+          error: "No fue posible actualizar el perfil",
+        },
       );
-
-      const result: UpdateClientResponse = await response.json();
-
-      if (!response.ok || !result.success || !result.data) {
-        throw new Error(
-          result.message || "No fue posible actualizar tus datos."
-        );
-      }
-
-      updateClientSessionUser({
-        id: result.data.id,
-        email: result.data.email,
-        fullName: result.data.full_name,
-        phone: result.data.phone ?? null,
-        documentId: result.data.document_id ?? null,
-        address: result.data.address ?? null,
-        isActive: result.data.is_active,
-      });
-
-      setFullName(result.data.full_name ?? "");
-      setPhone(result.data.phone ?? "");
-      setDocumentId(result.data.document_id ?? "");
-      setAddress(result.data.address ?? "");
-      setIsActive(result.data.is_active);
 
       setSubmitSuccess("Tus datos fueron actualizados correctamente.");
     } catch (error) {

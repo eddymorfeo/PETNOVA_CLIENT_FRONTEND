@@ -17,7 +17,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginLegal } from "../login/login-legal";
-import { setClientSession } from "@/lib/auth/client-session";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 type RegisterResponse = {
   success: boolean;
@@ -80,26 +80,38 @@ export function RegisterForm() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/register`,
+      await withProcessToast(
+        async () => {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/register`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                fullName: fullName.trim(),
+                email: email.trim().toLowerCase(),
+                password,
+              }),
+            },
+          );
+
+          const result: RegisterResponse = await response.json();
+
+          if (!response.ok || !result.success || !result.data) {
+            throw new Error(result.message || "No fue posible crear la cuenta.");
+          }
+
+          return result;
+        },
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fullName: fullName.trim(),
-            email: email.trim().toLowerCase(),
-            password,
-          }),
-        }
+          loading: "Creando cuenta...",
+          success: "Cuenta creada correctamente",
+          successDescription: "Serás redirigido al inicio de sesión.",
+          error: "No fue posible crear la cuenta",
+        },
       );
-
-      const result: RegisterResponse = await response.json();
-
-      if (!response.ok || !result.success || !result.data) {
-        throw new Error(result.message || "No fue posible crear la cuenta.");
-      }
 
       setSubmitSuccess("Cuenta creada correctamente. Serás redirigido.");
 

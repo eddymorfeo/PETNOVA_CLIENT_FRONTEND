@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginLegal } from "../login/login-legal";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 
 type ForgotPasswordResponse = {
   success: boolean;
@@ -36,26 +37,39 @@ export function ForgotPasswordForm() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/forgot-password`,
+      await withProcessToast(
+        async () => {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/clients/forgot-password`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: email.trim().toLowerCase(),
+              }),
+            },
+          );
+
+          const result: ForgotPasswordResponse = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message || "No fue posible enviar las instrucciones.",
+            );
+          }
+
+          return result;
+        },
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-          }),
-        }
+          loading: "Enviando instrucciones...",
+          success: "Instrucciones enviadas",
+          successDescription:
+            "Si el correo existe, recibirá el enlace de recuperación.",
+          error: "No fue posible enviar las instrucciones",
+        },
       );
-
-      const result: ForgotPasswordResponse = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message || "No fue posible enviar las instrucciones."
-        );
-      }
 
       setSubmitSuccess(
         "Si el correo existe en el sistema, recibirás un enlace para restablecer tu contraseña."

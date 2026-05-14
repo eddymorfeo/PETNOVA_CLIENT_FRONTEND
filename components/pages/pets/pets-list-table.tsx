@@ -15,6 +15,7 @@ import { useState } from "react";
 
 import { deletePet } from "@/api/pets/pets.api";
 import { Button } from "@/components/ui/button";
+import { withProcessToast } from "@/lib/feedback/process-toast";
 import type { PetItem } from "@/types/pets/pet.types";
 
 function formatSex(value?: string | null) {
@@ -63,7 +64,12 @@ export function PetsListTable({ pets }: { pets: PetItem[] }) {
       setSubmitError("");
       setDeletingPetId(petId);
 
-      await deletePet(petId);
+      await withProcessToast(() => deletePet(petId), {
+        loading: "Eliminando mascota...",
+        success: "Mascota eliminada correctamente",
+        successDescription: `${petName} fue desactivada en el portal.`,
+        error: "No fue posible eliminar la mascota",
+      });
 
       router.refresh();
       router.push("/home/pets");
