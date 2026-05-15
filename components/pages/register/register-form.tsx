@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoginLegal } from "../login/login-legal";
+import { env } from "@/lib/env";
 import { withProcessToast } from "@/lib/feedback/process-toast";
 
 type RegisterResponse = {
@@ -33,6 +34,15 @@ type RegisterResponse = {
       address?: string | null;
       isActive: boolean;
     };
+  };
+};
+
+type GuestInvitationResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    fullName: string;
+    email: string;
   };
 };
 
@@ -53,16 +63,41 @@ export function RegisterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const emailFromUrl = searchParams.get("email");
-    const fullNameFromUrl = searchParams.get("fullName");
+    const invitationToken = searchParams.get("invitation");
 
-    if (emailFromUrl) {
-      setEmail(emailFromUrl);
+    if (!invitationToken) {
+      return;
     }
 
-    if (fullNameFromUrl) {
-      setFullName(fullNameFromUrl);
-    }
+    const loadInvitation = async () => {
+      try {
+        const response = await fetch(
+          `${env.apiUrl}/public/guest-appointments/invitations/${encodeURIComponent(invitationToken)}`,
+        );
+        const result: GuestInvitationResponse = await response.json();
+
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(
+            result.message || "No fue posible obtener la invitación.",
+          );
+        }
+
+        setFullName(result.data.fullName ?? "");
+        setEmail(result.data.email ?? "");
+
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", "/register");
+        }
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "No fue posible obtener la invitación.",
+        );
+      }
+    };
+
+    void loadInvitation();
   }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
