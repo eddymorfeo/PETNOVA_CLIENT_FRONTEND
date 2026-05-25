@@ -54,6 +54,7 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [invitationToken, setInvitationToken] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -68,6 +69,8 @@ export function RegisterForm() {
     if (!invitationToken) {
       return;
     }
+
+    setInvitationToken(invitationToken);
 
     const loadInvitation = async () => {
       try {
@@ -142,6 +145,7 @@ export function RegisterForm() {
                 fullName: fullName.trim(),
                 email: email.trim().toLowerCase(),
                 password,
+                invitation: invitationToken || undefined,
               }),
             },
           );
